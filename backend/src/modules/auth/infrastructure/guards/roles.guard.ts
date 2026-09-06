@@ -1,11 +1,19 @@
-import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
-import { AuthenticatedUser } from '../../domain/auth-user.interface';
+import { FastifyAuthRequest } from '../interfaces/auth-request.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -18,17 +26,23 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest<{ user: AuthenticatedUser }>();
+    const request = context.switchToHttp().getRequest<FastifyAuthRequest>();
+    const user = request.user;
 
     if (!user || !user.rolInterno) {
-      throw new ForbiddenException('No posee un rol asignado para ejecutar esta acción');
+      this.logger.warn(
+        `[RolesGuard] Acceso rechazado (403): Usuario sin rol interno asignado o no autenticado. Usuario ID: ${user?.id || 'anónimo'}, Ruta: ${request.method} ${request.url}`,
+      );
+      throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 
     const hasRole = requiredRoles.includes(user.rolInterno);
     if (!hasRole) {
-      throw new ForbiddenException(
-        `Se requiere uno de los siguientes roles: ${requiredRoles.join(', ')}. Su rol actual es: ${user.rolInterno}`,
+      this.logger.warn(
+        `[RolesGuard] Acceso rechazado (403): Permisos insuficientes. Usuario ID: ${user.id}, Rol actual: "${user.rolInterno}". Roles requeridos: [${requiredRoles.join(', ')}]. Ruta: ${request.method} ${request.url}`,
       );
+      // Prevención estricta de Information Leakage: mensaje genérico y opaco hacia el cliente
+      throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 
     return true;

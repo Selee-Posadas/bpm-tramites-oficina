@@ -4,32 +4,41 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
-import { FastifyRequest } from 'fastify';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { TipoUsuario } from '../../../tramites/domain/enums/tipo-usuario.enum';
-import { AuthenticatedUser } from '../../domain/auth-user.interface';
+import { FastifyAuthRequest } from '../interfaces/auth-request.interface';
+
+interface TramiteRouteParams {
+  id?: string;
+  tramiteId?: string;
+}
 
 @Injectable()
 export class TramiteOwnershipGuard implements CanActivate {
+  private readonly logger = new Logger(TramiteOwnershipGuard.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<
-      FastifyRequest<{ Params: { id?: string; tramiteId?: string } }> & { user?: AuthenticatedUser }
-    >();
+    const request = context.switchToHttp().getRequest<FastifyAuthRequest<{ Params: TramiteRouteParams }>>();
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException('Usuario no autenticado en el contexto de la solicitud');
+      this.logger.warn(
+        `[TramiteOwnershipGuard] Acceso rechazado (403): Usuario no presente en contexto de la solicitud. Ruta: ${request.method} ${request.url}`,
+      );
+      throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 
-    // Los usuarios internos tienen sus propios controles de acceso y roles
+    // Los usuarios internos tienen sus propios controles de acceso y RBAC por área/rol
     if (user.tipo === TipoUsuario.INTERNO) {
       return true;
     }
 
-    const tramiteId = request.params?.id || request.params?.tramiteId;
+    const params = request.params as TramiteRouteParams | undefined;
+    const tramiteId = params?.id || params?.tramiteId;
     if (!tramiteId) {
       return true;
     }
@@ -44,16 +53,21 @@ export class TramiteOwnershipGuard implements CanActivate {
     });
 
     if (!tramite) {
-      throw new NotFoundException(`Trámite con id ${tramiteId} no encontrado`);
+      this.logger.warn(
+        `[TramiteOwnershipGuard] Recurso no encontrado (404): Trámite ID "${tramiteId}" inexistente. Usuario ID: ${user.id}, Ruta: ${request.method} ${request.url}`,
+      );
+      throw new NotFoundException('Trámite no encontrado');
     }
 
     const esPropietario =
       tramite.usuarioExternoId === user.id || tramite.creadoPorId === user.id;
 
     if (!esPropietario) {
-      throw new ForbiddenException(
-        'Acceso denegado: No tiene permisos para acceder o modificar un trámite que no le pertenece',
+      this.logger.warn(
+        `[TramiteOwnershipGuard] Acceso rechazado (403): Usuario externo intentó acceder a trámite ajeno. Usuario ID: ${user.id}, Trámite ID: ${tramite.id}, Dueño: ${tramite.usuarioExternoId || tramite.creadoPorId}, Ruta: ${request.method} ${request.url}`,
       );
+      // Prevención de Information Leakage hacia el cliente
+      throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 
     return true;

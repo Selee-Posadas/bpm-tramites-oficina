@@ -4,11 +4,12 @@ import { InternalAuthGuard } from '../../src/modules/auth/infrastructure/guards/
 import { ExternalAuthGuard } from '../../src/modules/auth/infrastructure/guards/external-auth.guard';
 import { RolesGuard } from '../../src/modules/auth/infrastructure/guards/roles.guard';
 import { TramiteOwnershipGuard } from '../../src/modules/auth/infrastructure/guards/tramite-ownership.guard';
+import { AnyAuthGuard } from '../../src/modules/auth/infrastructure/guards/any-auth.guard';
 import { TipoUsuario } from '../../src/modules/tramites/domain/enums/tipo-usuario.enum';
 import { RolInterno } from '../../src/modules/usuarios/domain/enums/rol-interno.enum';
 import { Reflector } from '@nestjs/core';
 
-describe('Auth Guards & Ownership', () => {
+describe('Auth Guards & Ownership (Security Hardened)', () => {
   let jwtService: JwtService;
   const jwtSecret = 'test-secret';
 
@@ -16,11 +17,19 @@ describe('Auth Guards & Ownership', () => {
     jwtService = new JwtService({ secret: jwtSecret });
   });
 
-  const createMockContext = (headers: Record<string, string> = {}, params: Record<string, string> = {}, user?: any): ExecutionContext => {
+  const createMockContext = (
+    headers: Record<string, string> = {},
+    params: Record<string, string> = {},
+    user?: any,
+    method = 'GET',
+    url = '/api/test',
+  ): ExecutionContext => {
     const req: any = {
       headers,
       params,
       user,
+      method,
+      url,
     };
     return {
       switchToHttp: () => ({
@@ -39,12 +48,18 @@ describe('Auth Guards & Ownership', () => {
       guard = new InternalAuthGuard(jwtService);
     });
 
-    it('debe rechazar la solicitud si no hay header Authorization (401)', () => {
+    it('debe rechazar la solicitud si no hay header Authorization con mensaje opaco (401)', () => {
       const context = createMockContext();
-      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+      try {
+        guard.canActivate(context);
+        fail('Se esperaba UnauthorizedException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnauthorizedException);
+        expect((error as UnauthorizedException).message).toBe('Token inválido o expirado');
+      }
     });
 
-    it('debe rechazar la solicitud si se presenta un token de usuario externo (403)', () => {
+    it('debe rechazar la solicitud con 403 y mensaje opaco si un externo usa token en recurso interno (Aislamiento)', () => {
       const token = jwtService.sign({
         sub: 'ext-1',
         email: 'proveedor@test.com',
@@ -53,10 +68,17 @@ describe('Auth Guards & Ownership', () => {
       });
 
       const context = createMockContext({ authorization: `Bearer ${token}` });
-      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+      try {
+        guard.canActivate(context);
+        fail('Se esperaba ForbiddenException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        // Prevención de information leakage: no revelar que se usó un token externo
+        expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
+      }
     });
 
-    it('debe permitir el acceso con un token de usuario interno válido', () => {
+    it('debe normalizar variaciones de mayúsculas/minúsculas y espacios en el header Bearer', () => {
       const token = jwtService.sign({
         sub: 'int-1',
         email: 'operador@bpm.local',
@@ -66,9 +88,13 @@ describe('Auth Guards & Ownership', () => {
         areaId: 'area-1',
       });
 
-      const context = createMockContext({ authorization: `Bearer ${token}` });
-      const result = guard.canActivate(context);
-      expect(result).toBe(true);
+      // lowercase bearer con espacios adicionales
+      const contextLower = createMockContext({ authorization: `bearer   ${token}` });
+      expect(guard.canActivate(contextLower)).toBe(true);
+
+      // uppercase BEARER
+      const contextUpper = createMockContext({ authorization: `BEARER ${token}` });
+      expect(guard.canActivate(contextUpper)).toBe(true);
     });
   });
 
@@ -79,7 +105,7 @@ describe('Auth Guards & Ownership', () => {
       guard = new ExternalAuthGuard(jwtService);
     });
 
-    it('debe rechazar la solicitud si se presenta un token corporativo interno (403)', () => {
+    it('debe rechazar la solicitud con 403 y mensaje opaco si un interno usa token en recurso externo (Aislamiento)', () => {
       const token = jwtService.sign({
         sub: 'int-1',
         email: 'admin@bpm.local',
@@ -88,10 +114,17 @@ describe('Auth Guards & Ownership', () => {
       });
 
       const context = createMockContext({ authorization: `Bearer ${token}` });
-      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+      try {
+        guard.canActivate(context);
+        fail('Se esperaba ForbiddenException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        // Prevención de information leakage
+        expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
+      }
     });
 
-    it('debe permitir el acceso con un token de usuario externo válido', () => {
+    it('debe permitir el acceso con token externo normalizando "bearer"', () => {
       const token = jwtService.sign({
         sub: 'ext-1',
         email: 'proveedor@test.com',
@@ -99,7 +132,7 @@ describe('Auth Guards & Ownership', () => {
         tipo: TipoUsuario.EXTERNO,
       });
 
-      const context = createMockContext({ authorization: `Bearer ${token}` });
+      const context = createMockContext({ authorization: `bearer ${token}` });
       const result = guard.canActivate(context);
       expect(result).toBe(true);
     });
@@ -120,21 +153,31 @@ describe('Auth Guards & Ownership', () => {
       expect(guard.canActivate(context)).toBe(true);
     });
 
-    it('debe denegar acceso (403) si el usuario no tiene el rol requerido', () => {
+    it('debe denegar acceso con mensaje opaco (403) sin revelar roles requeridos ni rol actual (Prevención de fuga)', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([RolInterno.SUPERVISOR, RolInterno.ADMIN]);
-      const context = createMockContext({}, {}, { rolInterno: RolInterno.OPERADOR });
-      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+      const context = createMockContext({}, {}, { id: 'usr-1', rolInterno: RolInterno.OPERADOR });
+
+      try {
+        guard.canActivate(context);
+        fail('Se esperaba ForbiddenException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
+        // No debe contener nombres de roles en el mensaje del cliente
+        expect((error as ForbiddenException).message).not.toContain('SUPERVISOR');
+        expect((error as ForbiddenException).message).not.toContain('OPERADOR');
+      }
     });
 
-    it('debe denegar acceso (403) a un usuario con rol AUDITOR que intente ejecutar una mutación restringida', () => {
+    it('debe denegar acceso (403) a un usuario con rol AUDITOR que intente ejecutar una acción restringida', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([RolInterno.OPERADOR, RolInterno.SUPERVISOR]);
-      const context = createMockContext({}, {}, { rolInterno: RolInterno.AUDITOR });
+      const context = createMockContext({}, {}, { id: 'usr-2', rolInterno: RolInterno.AUDITOR });
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
     });
 
     it('debe permitir acceso si el usuario cuenta con el rol requerido', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([RolInterno.SUPERVISOR, RolInterno.ADMIN]);
-      const context = createMockContext({}, {}, { rolInterno: RolInterno.ADMIN });
+      const context = createMockContext({}, {}, { id: 'usr-3', rolInterno: RolInterno.ADMIN });
       expect(guard.canActivate(context)).toBe(true);
     });
   });
@@ -159,14 +202,20 @@ describe('Auth Guards & Ownership', () => {
       expect(prismaMock.tramite.findUnique).not.toHaveBeenCalled();
     });
 
-    it('debe arrojar 404 NotFoundException si el trámite no existe', async () => {
+    it('debe arrojar 404 NotFoundException con mensaje opaco si el trámite no existe', async () => {
       prismaMock.tramite.findUnique.mockResolvedValue(null);
       const context = createMockContext({}, { id: 't-inexistente' }, { tipo: TipoUsuario.EXTERNO, id: 'user-ext' });
 
-      await expect(guard.canActivate(context)).rejects.toThrow(NotFoundException);
+      try {
+        await guard.canActivate(context);
+        fail('Se esperaba NotFoundException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect((error as NotFoundException).message).toBe('Trámite no encontrado');
+      }
     });
 
-    it('debe arrojar 403 ForbiddenException si el usuario externo intenta acceder a un trámite ajeno', async () => {
+    it('debe arrojar 403 ForbiddenException con mensaje opaco si el usuario externo intenta acceder a un trámite ajeno', async () => {
       prismaMock.tramite.findUnique.mockResolvedValue({
         id: 't-1',
         usuarioExternoId: 'otro-usuario',
@@ -174,7 +223,13 @@ describe('Auth Guards & Ownership', () => {
       });
       const context = createMockContext({}, { id: 't-1' }, { tipo: TipoUsuario.EXTERNO, id: 'mi-usuario' });
 
-      await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+      try {
+        await guard.canActivate(context);
+        fail('Se esperaba ForbiddenException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
+      }
     });
 
     it('debe permitir el acceso si el usuario externo es el propietario del trámite', async () => {
@@ -187,6 +242,51 @@ describe('Auth Guards & Ownership', () => {
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
+    });
+  });
+
+  describe('AnyAuthGuard', () => {
+    let guard: AnyAuthGuard;
+
+    beforeEach(() => {
+      guard = new AnyAuthGuard(jwtService);
+    });
+
+    it('debe aceptar token interno válido con prefijo normalizado', () => {
+      const token = jwtService.sign({
+        sub: 'int-1',
+        email: 'user@bpm.local',
+        nombre: 'Usuario Interno',
+        tipo: TipoUsuario.INTERNO,
+        rol: RolInterno.OPERADOR,
+        areaId: 'area-1',
+      });
+
+      const context = createMockContext({ authorization: `bearer  ${token}` });
+      expect(guard.canActivate(context)).toBe(true);
+    });
+
+    it('debe aceptar token externo válido con prefijo normalizado', () => {
+      const token = jwtService.sign({
+        sub: 'ext-1',
+        email: 'user@externo.local',
+        nombre: 'Usuario Externo',
+        tipo: TipoUsuario.EXTERNO,
+      });
+
+      const context = createMockContext({ authorization: `BEARER ${token}` });
+      expect(guard.canActivate(context)).toBe(true);
+    });
+
+    it('debe rechazar tokens malformados con mensaje opaco (401)', () => {
+      const context = createMockContext({ authorization: 'Bearer token-invalido' });
+      try {
+        guard.canActivate(context);
+        fail('Se esperaba UnauthorizedException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnauthorizedException);
+        expect((error as UnauthorizedException).message).toBe('Token inválido o expirado');
+      }
     });
   });
 });
