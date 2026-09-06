@@ -35,7 +35,6 @@ export class Tramite {
     };
   }
 
-  // Getters
   get id(): string {
     return this.props.id;
   }
@@ -131,19 +130,15 @@ export class Tramite {
     const estadoAnterior = this.props.estado;
     const areaAnteriorId = this.props.areaActualId;
 
-    // Validación y cálculo del próximo estado en la máquina de estados
     const estadoNuevo = workflow.determinarProximoEstado(estadoAnterior, accion, contexto);
 
-    // Actualizaciones de asignación y área según la acción
     if (accion === AccionWorkflow.TOMAR) {
       this.props.usuarioAsignadoId = contexto.usuarioId;
     } else if (accion === AccionWorkflow.ASIGNAR) {
-      // Reasignación realizada por Supervisor o Admin
       this.props.usuarioAsignadoId = contexto.usuarioId;
     } else if (accion === AccionWorkflow.DERIVAR) {
       if (contexto.areaDestinoId) {
         this.props.areaActualId = contexto.areaDestinoId;
-        // Al derivar se desasigna el operador para que lo tome un operador de la nueva área
         this.props.usuarioAsignadoId = null;
       }
     }

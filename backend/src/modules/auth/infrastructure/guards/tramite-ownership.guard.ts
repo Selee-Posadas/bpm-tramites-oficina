@@ -32,7 +32,6 @@ export class TramiteOwnershipGuard implements CanActivate {
       throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 
-    // Los usuarios internos tienen sus propios controles de acceso y RBAC por área/rol
     if (user.tipo === TipoUsuario.INTERNO) {
       return true;
     }
@@ -66,7 +65,6 @@ export class TramiteOwnershipGuard implements CanActivate {
       this.logger.warn(
         `[TramiteOwnershipGuard] Acceso rechazado (403): Usuario externo intentó acceder a trámite ajeno. Usuario ID: ${user.id}, Trámite ID: ${tramite.id}, Dueño: ${tramite.usuarioExternoId || tramite.creadoPorId}, Ruta: ${request.method} ${request.url}`,
       );
-      // Prevención de Information Leakage hacia el cliente
       throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 

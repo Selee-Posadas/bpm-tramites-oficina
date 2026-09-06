@@ -26,7 +26,6 @@ describe('SlaCalculatorService (Domain Service)', () => {
   }
 
   it('debe catalogar como EN_TERMINO un trámite con poco tiempo transcurrido', () => {
-    // Creado hace 2 horas, SLA de 24 horas (8.3% consumido)
     const fechaCreacion = new Date('2026-09-06T10:00:00Z');
     const tramite = crearTramite(fechaCreacion);
 
@@ -39,7 +38,6 @@ describe('SlaCalculatorService (Domain Service)', () => {
   });
 
   it('debe catalogar como PROXIMO_A_VENCER un trámite con más del 80% consumido', () => {
-    // Creado hace 20 horas, SLA de 24 horas (83.3% consumido)
     const fechaCreacion = new Date('2026-09-05T16:00:00Z');
     const tramite = crearTramite(fechaCreacion);
 
@@ -52,7 +50,6 @@ describe('SlaCalculatorService (Domain Service)', () => {
   });
 
   it('debe catalogar como VENCIDO un trámite que superó las horas de SLA', () => {
-    // Creado hace 26 horas, SLA de 24 horas
     const fechaCreacion = new Date('2026-09-05T10:00:00Z');
     const tramite = crearTramite(fechaCreacion);
 
@@ -65,7 +62,7 @@ describe('SlaCalculatorService (Domain Service)', () => {
 
   it('debe catalogar como FINALIZADO un trámite aprobado o cerrado', () => {
     const fechaCreacion = new Date('2026-09-05T10:00:00Z');
-    const fechaCierre = new Date('2026-09-05T18:00:00Z'); // Cerró en 8 horas (en término de 24h)
+    const fechaCierre = new Date('2026-09-05T18:00:00Z');
     const tramite = crearTramite(fechaCreacion, EstadoTramite.APROBADO, fechaCierre);
 
     const slaInfo = SlaCalculatorService.calcularSla(tramite, 24, ahora);

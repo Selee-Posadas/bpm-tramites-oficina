@@ -80,11 +80,10 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    const tramite = await this.ingresarTramiteUseCase.execute({
+    return await this.ingresarTramiteUseCase.execute({
       tramiteId: id,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('tomar')
@@ -96,16 +95,10 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    const tramite = await this.tomarTramiteUseCase.execute({
+    return await this.tomarTramiteUseCase.execute({
       tramiteId: id,
       contexto,
     });
-    return {
-      id: tramite.id,
-      numero: tramite.numero,
-      estado: tramite.estado,
-      usuarioAsignadoId: tramite.usuarioAsignadoId,
-    };
   }
 
   @Post('asignar')
@@ -118,17 +111,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    const tramite = await this.asignarTramiteUseCase.execute({
+    return await this.asignarTramiteUseCase.execute({
       tramiteId: id,
       nuevoOperadorId: dto.operadorId,
       contexto,
     });
-    return {
-      id: tramite.id,
-      numero: tramite.numero,
-      estado: tramite.estado,
-      usuarioAsignadoId: tramite.usuarioAsignadoId,
-    };
   }
 
   @Post('derivar')
@@ -141,18 +128,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo, dto.areaDestinoId);
-    const tramite = await this.derivarTramiteUseCase.execute({
+    return await this.derivarTramiteUseCase.execute({
       tramiteId: id,
       areaDestinoId: dto.areaDestinoId,
       motivo: dto.motivo,
       contexto,
     });
-    return {
-      id: tramite.id,
-      numero: tramite.numero,
-      estado: tramite.estado,
-      areaActualId: tramite.areaActualId,
-    };
   }
 
   @Post('observar')
@@ -165,12 +146,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.observarTramiteUseCase.execute({
+    return await this.observarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('responder-observacion')
@@ -182,12 +162,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo || dto.respuesta);
-    const tramite = await this.responderObservacionUseCase.execute({
+    return await this.responderObservacionUseCase.execute({
       tramiteId: id,
       respuesta: dto.respuesta,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('solicitar-intervencion-externa')
@@ -200,12 +179,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.solicitarIntervencionExternaUseCase.execute({
+    return await this.solicitarIntervencionExternaUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('responder-intervencion-externa')
@@ -217,12 +195,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo || dto.respuesta);
-    const tramite = await this.responderIntervencionExternaUseCase.execute({
+    return await this.responderIntervencionExternaUseCase.execute({
       tramiteId: id,
       respuesta: dto.respuesta,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('aprobar')
@@ -235,12 +212,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.aprobarTramiteUseCase.execute({
+    return await this.aprobarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('rechazar')
@@ -253,17 +229,16 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.rechazarTramiteUseCase.execute({
+    return await this.rechazarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 
   @Post('cerrar')
   @UseGuards(InternalAuthGuard, RolesGuard)
-  @Roles(RolInterno.SUPERVISOR, RolInterno.ADMIN)
+  @Roles(RolInterno.OPERADOR, RolInterno.SUPERVISOR, RolInterno.ADMIN)
   @HttpCode(HttpStatus.OK)
   async cerrar(
     @Param('id') id: string,
@@ -271,17 +246,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.cerrarTramiteUseCase.execute({
+    return await this.cerrarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return {
-      id: tramite.id,
-      numero: tramite.numero,
-      estado: tramite.estado,
-      fechaCierre: tramite.fechaCierre,
-    };
   }
 
   @Post('cancelar')
@@ -293,11 +262,10 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    const tramite = await this.cancelarTramiteUseCase.execute({
+    return await this.cancelarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
-    return { id: tramite.id, numero: tramite.numero, estado: tramite.estado };
   }
 }

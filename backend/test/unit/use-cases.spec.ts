@@ -7,7 +7,10 @@ import { ResponderObservacionUseCase } from '../../src/modules/tramites/applicat
 import { AprobarTramiteUseCase } from '../../src/modules/tramites/application/use-cases/aprobar-tramite.use-case';
 import { RechazarTramiteUseCase } from '../../src/modules/tramites/application/use-cases/rechazar-tramite.use-case';
 import { CerrarTramiteUseCase } from '../../src/modules/tramites/application/use-cases/cerrar-tramite.use-case';
-import { ListarComentariosUseCase } from '../../src/modules/comentarios/application/use-cases/listar-comentarios.use-case';
+import { ListarComentariosUseCase } from '../../src/modules/tramites/application/use-cases/listar-comentarios.use-case';
+import { ModificarBorradorUseCase } from '../../src/modules/tramites/application/use-cases/modificar-borrador.use-case';
+import { EliminarTramiteBorradorUseCase } from '../../src/modules/tramites/application/use-cases/eliminar-tramite-borrador.use-case';
+import { IComentarioTramiteRepository } from '../../src/modules/tramites/domain/repositories/comentario-tramite.repository.interface';
 import { ITramiteRepository } from '../../src/modules/tramites/domain/repositories/tramite.repository.interface';
 import { ITipoTramiteRepository } from '../../src/modules/tipos-tramite/domain/repositories/tipo-tramite.repository.interface';
 import { IMovimientoTramiteRepository } from '../../src/modules/tramites/domain/repositories/movimiento-tramite.repository.interface';
@@ -33,6 +36,7 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
   let tipoTramiteRepoMock: jest.Mocked<ITipoTramiteRepository>;
   let movimientoRepoMock: jest.Mocked<IMovimientoTramiteRepository>;
   let areaRepoMock: jest.Mocked<IAreaRepository>;
+  let comentarioRepoMock: jest.Mocked<IComentarioTramiteRepository>;
 
   beforeEach(() => {
     tramiteRepoMock = {
@@ -68,6 +72,11 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
       findAll: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
+    };
+
+    comentarioRepoMock = {
+      save: jest.fn(),
+      findByTramiteId: jest.fn(),
     };
   });
 
@@ -308,95 +317,198 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
   });
 
   describe('ListarComentariosUseCase (Filtro de Seguridad)', () => {
-    it('debe filtrar y ocultar los comentarios internos a los usuarios externos', async () => {
-      const tramite = new Tramite({
-        id: 't-1',
-        numero: 'TRM-001',
-        tipoTramiteId: 'tipo-1',
-        titulo: 'Trámite',
-        descripcion: 'Desc',
-        origen: OrigenTramite.EXTERNO_INTERNO,
-        estado: EstadoTramite.EN_REVISION,
-        prioridad: PrioridadTramite.MEDIA,
-        usuarioExternoId: 'ext-1',
-        creadoPorTipo: TipoUsuario.EXTERNO,
-        creadoPorId: 'ext-1',
-        comentarios: [
-          new ComentarioTramite({
-            id: 'c-1',
-            tramiteId: 't-1',
-            mensaje: 'Comentario interno confidencial entre auditores',
-            visibilidad: VisibilidadComentario.INTERNA,
-            autorTipo: TipoUsuario.INTERNO,
-            autorId: 'op-1',
-          }),
-          new ComentarioTramite({
-            id: 'c-2',
-            tramiteId: 't-1',
-            mensaje: 'Comentario público para el solicitante',
-            visibilidad: VisibilidadComentario.EXTERNA,
-            autorTipo: TipoUsuario.INTERNO,
-            autorId: 'op-1',
-          }),
-        ],
+    it('debe filtrar y solicitar solo comentarios públicos cuando el usuario es EXTERNO', async () => {
+      const publicComment = new ComentarioTramite({
+        id: 'c-2',
+        tramiteId: 't-1',
+        mensaje: 'Comentario público para el solicitante',
+        visibilidad: VisibilidadComentario.EXTERNA,
+        autorTipo: TipoUsuario.INTERNO,
+        autorId: 'op-1',
       });
-      tramiteRepoMock.findById.mockResolvedValue(tramite);
+      comentarioRepoMock.findByTramiteId.mockResolvedValue([publicComment]);
 
-      const useCase = new ListarComentariosUseCase(tramiteRepoMock);
+      const useCase = new ListarComentariosUseCase(comentarioRepoMock);
 
       const result = await useCase.execute({
         tramiteId: 't-1',
         usuarioTipo: TipoUsuario.EXTERNO,
-        usuarioId: 'ext-1',
       });
 
+      expect(comentarioRepoMock.findByTramiteId).toHaveBeenCalledWith('t-1', true);
       expect(result).toHaveLength(1);
       expect(result[0].mensaje).toBe('Comentario público para el solicitante');
     });
 
-    it('debe mostrar todos los comentarios (internos y externos) al personal interno', async () => {
-      const tramite = new Tramite({
-        id: 't-1',
-        numero: 'TRM-001',
-        tipoTramiteId: 'tipo-1',
-        titulo: 'Trámite',
-        descripcion: 'Desc',
-        origen: OrigenTramite.EXTERNO_INTERNO,
-        estado: EstadoTramite.EN_REVISION,
-        prioridad: PrioridadTramite.MEDIA,
-        usuarioExternoId: 'ext-1',
-        creadoPorTipo: TipoUsuario.EXTERNO,
-        creadoPorId: 'ext-1',
-        comentarios: [
-          new ComentarioTramite({
-            id: 'c-1',
-            tramiteId: 't-1',
-            mensaje: 'Nota interna',
-            visibilidad: VisibilidadComentario.INTERNA,
-            autorTipo: TipoUsuario.INTERNO,
-            autorId: 'op-1',
-          }),
-          new ComentarioTramite({
-            id: 'c-2',
-            tramiteId: 't-1',
-            mensaje: 'Mensaje público',
-            visibilidad: VisibilidadComentario.TODOS,
-            autorTipo: TipoUsuario.INTERNO,
-            autorId: 'op-1',
-          }),
-        ],
+    it('debe solicitar todos los comentarios (internos y públicos) cuando el usuario es INTERNO', async () => {
+      const internalComment = new ComentarioTramite({
+        id: 'c-1',
+        tramiteId: 't-1',
+        mensaje: 'Nota interna confidencial',
+        visibilidad: VisibilidadComentario.INTERNA,
+        autorTipo: TipoUsuario.INTERNO,
+        autorId: 'op-1',
       });
-      tramiteRepoMock.findById.mockResolvedValue(tramite);
+      const publicComment = new ComentarioTramite({
+        id: 'c-2',
+        tramiteId: 't-1',
+        mensaje: 'Mensaje general',
+        visibilidad: VisibilidadComentario.TODOS,
+        autorTipo: TipoUsuario.INTERNO,
+        autorId: 'op-1',
+      });
+      comentarioRepoMock.findByTramiteId.mockResolvedValue([internalComment, publicComment]);
 
-      const useCase = new ListarComentariosUseCase(tramiteRepoMock);
+      const useCase = new ListarComentariosUseCase(comentarioRepoMock);
 
       const result = await useCase.execute({
         tramiteId: 't-1',
         usuarioTipo: TipoUsuario.INTERNO,
-        usuarioId: 'op-2',
       });
 
+      expect(comentarioRepoMock.findByTramiteId).toHaveBeenCalledWith('t-1', false);
       expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('ModificarBorradorUseCase', () => {
+    it('debe permitir modificar un trámite en estado BORRADOR por su dueño', async () => {
+      const tramite = new Tramite({
+        id: 't-borrador',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título Original',
+        descripcion: 'Desc Original',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.BORRADOR,
+        prioridad: PrioridadTramite.BAJA,
+        usuarioExternoId: 'ext-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new ModificarBorradorUseCase(tramiteRepoMock);
+      const result = await useCase.execute({
+        tramiteId: 't-borrador',
+        titulo: 'Título Actualizado',
+        descripcion: 'Desc Actualizada',
+        prioridad: PrioridadTramite.ALTA,
+        usuarioTipo: TipoUsuario.EXTERNO,
+        usuarioId: 'ext-1',
+      });
+
+      expect(result.titulo).toBe('Título Actualizado');
+      expect(result.prioridad).toBe(PrioridadTramite.ALTA);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+    });
+
+    it('debe rechazar modificación si el usuario externo no es el propietario', async () => {
+      const tramite = new Tramite({
+        id: 't-borrador',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.BORRADOR,
+        prioridad: PrioridadTramite.BAJA,
+        usuarioExternoId: 'otro-usuario',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'otro-usuario',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new ModificarBorradorUseCase(tramiteRepoMock);
+      await expect(
+        useCase.execute({
+          tramiteId: 't-borrador',
+          titulo: 'Hack',
+          usuarioTipo: TipoUsuario.EXTERNO,
+          usuarioId: 'ext-1',
+        }),
+      ).rejects.toThrow(UnauthorizedActionException);
+    });
+
+    it('debe rechazar modificación si el trámite no está en estado BORRADOR', async () => {
+      const tramite = new Tramite({
+        id: 't-ingresado',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.INGRESADO,
+        prioridad: PrioridadTramite.BAJA,
+        usuarioExternoId: 'ext-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new ModificarBorradorUseCase(tramiteRepoMock);
+      await expect(
+        useCase.execute({
+          tramiteId: 't-ingresado',
+          titulo: 'Nuevo título',
+          usuarioTipo: TipoUsuario.EXTERNO,
+          usuarioId: 'ext-1',
+        }),
+      ).rejects.toThrow(BusinessRuleValidationException);
+    });
+  });
+
+  describe('EliminarTramiteBorradorUseCase', () => {
+    it('debe permitir eliminar un trámite en estado BORRADOR', async () => {
+      const tramite = new Tramite({
+        id: 't-borrador',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.BORRADOR,
+        prioridad: PrioridadTramite.BAJA,
+        usuarioExternoId: 'ext-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new EliminarTramiteBorradorUseCase(tramiteRepoMock);
+      await useCase.execute({
+        tramiteId: 't-borrador',
+        usuarioTipo: TipoUsuario.EXTERNO,
+        usuarioId: 'ext-1',
+      });
+
+      expect(tramiteRepoMock.delete).toHaveBeenCalledWith('t-borrador');
+    });
+
+    it('debe rechazar eliminación si el trámite no está en estado BORRADOR', async () => {
+      const tramite = new Tramite({
+        id: 't-en-revision',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.BAJA,
+        usuarioExternoId: 'ext-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new EliminarTramiteBorradorUseCase(tramiteRepoMock);
+      await expect(
+        useCase.execute({
+          tramiteId: 't-en-revision',
+          usuarioTipo: TipoUsuario.EXTERNO,
+          usuarioId: 'ext-1',
+        }),
+      ).rejects.toThrow(BusinessRuleValidationException);
     });
   });
 });

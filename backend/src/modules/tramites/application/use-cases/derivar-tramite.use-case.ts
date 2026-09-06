@@ -9,11 +9,14 @@ import {
   EntityNotFoundException,
   BusinessRuleValidationException,
 } from '../../../../shared/domain/exceptions/domain.exception';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface DerivarTramiteCommand {
   tramiteId: string;
   areaDestinoId: string;
-  motivo: string;
+  motivo?: string;
   contexto: WorkflowContext;
 }
 
@@ -28,7 +31,7 @@ export class DerivarTramiteUseCase {
     private readonly areaRepository: IAreaRepository,
   ) {}
 
-  async execute(command: DerivarTramiteCommand): Promise<Tramite> {
+  async execute(command: DerivarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -59,6 +62,7 @@ export class DerivarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    return await this.tramiteRepository.update(tramite);
+    const updated = await this.tramiteRepository.update(tramite);
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

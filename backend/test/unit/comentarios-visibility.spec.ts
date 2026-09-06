@@ -2,6 +2,8 @@ import { ComentarioTramite } from '../../src/modules/tramites/domain/entities/co
 import { VisibilidadComentario } from '../../src/modules/tramites/domain/enums/visibilidad-comentario.enum';
 import { TipoUsuario } from '../../src/modules/tramites/domain/enums/tipo-usuario.enum';
 import { ComentariosController } from '../../src/modules/tramites/infrastructure/controllers/comentarios.controller';
+import { AgregarComentarioUseCase } from '../../src/modules/tramites/application/use-cases/agregar-comentario.use-case';
+import { ListarComentariosUseCase } from '../../src/modules/tramites/application/use-cases/listar-comentarios.use-case';
 import { IComentarioTramiteRepository } from '../../src/modules/tramites/domain/repositories/comentario-tramite.repository.interface';
 import { ITramiteRepository } from '../../src/modules/tramites/domain/repositories/tramite.repository.interface';
 import { AuthenticatedUser } from '../../src/modules/auth/domain/auth-user.interface';
@@ -9,6 +11,8 @@ import { AuthenticatedUser } from '../../src/modules/auth/domain/auth-user.inter
 describe('Comentarios - Confidencialidad y Visibilidad', () => {
   let comentarioRepoMock: jest.Mocked<IComentarioTramiteRepository>;
   let tramiteRepoMock: jest.Mocked<ITramiteRepository>;
+  let listarComentariosUseCase: ListarComentariosUseCase;
+  let agregarComentarioUseCase: AgregarComentarioUseCase;
   let controller: ComentariosController;
 
   const comentarioInterno = new ComentarioTramite({
@@ -55,7 +59,15 @@ describe('Comentarios - Confidencialidad y Visibilidad', () => {
       countByArea: jest.fn(),
     };
 
-    controller = new ComentariosController(comentarioRepoMock, tramiteRepoMock);
+    listarComentariosUseCase = new ListarComentariosUseCase(comentarioRepoMock);
+    agregarComentarioUseCase = new AgregarComentarioUseCase(
+      comentarioRepoMock,
+      tramiteRepoMock,
+    );
+    controller = new ComentariosController(
+      agregarComentarioUseCase,
+      listarComentariosUseCase,
+    );
   });
 
   it('entidad ComentarioTramite debe responder correctamente a esVisibleParaExterno()', () => {
@@ -76,7 +88,6 @@ describe('Comentarios - Confidencialidad y Visibilidad', () => {
 
     const result = await controller.findByTramiteId('t-1', externalUser);
 
-    // Debe invocar el repositorio pasando soloVisiblesParaExterno = true
     expect(comentarioRepoMock.findByTramiteId).toHaveBeenCalledWith('t-1', true);
     expect(result).toHaveLength(2);
     expect(result.some((c) => c.visibilidad === VisibilidadComentario.INTERNA)).toBe(false);

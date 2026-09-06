@@ -15,12 +15,10 @@ export class InternoExternoWorkflow implements ITramiteWorkflow {
     accion: AccionWorkflow,
     contexto: WorkflowContext,
   ): void {
-    // 1. Auditor no puede modificar nunca
     if (contexto.usuarioTipo === TipoUsuario.INTERNO && contexto.rolInterno === RolInterno.AUDITOR) {
       throw new UnauthorizedActionException('Los usuarios con rol AUDITOR solo tienen permisos de lectura');
     }
 
-    // 2. Invariante: Ningún trámite en BORRADOR puede ser aprobado ni rechazado
     if (
       estadoActual === EstadoTramite.BORRADOR &&
       (accion === AccionWorkflow.APROBAR || accion === AccionWorkflow.RECHAZAR)
@@ -32,7 +30,6 @@ export class InternoExternoWorkflow implements ITramiteWorkflow {
       );
     }
 
-    // 3. Invariante: Solo se puede CERRAR un trámite en APROBADO, RECHAZADO o CANCELADO
     if (accion === AccionWorkflow.CERRAR) {
       if (
         estadoActual !== EstadoTramite.APROBADO &&
@@ -51,7 +48,6 @@ export class InternoExternoWorkflow implements ITramiteWorkflow {
       return;
     }
 
-    // 4. Cancelación
     if (accion === AccionWorkflow.CANCELAR) {
       if (
         estadoActual === EstadoTramite.APROBADO ||
@@ -68,7 +64,6 @@ export class InternoExternoWorkflow implements ITramiteWorkflow {
       return;
     }
 
-    // 5. Transiciones específicas del circuito Interno -> Externo
     switch (estadoActual) {
       case EstadoTramite.BORRADOR:
         if (accion !== AccionWorkflow.INGRESAR) {

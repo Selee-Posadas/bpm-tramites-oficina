@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
@@ -10,6 +9,9 @@ import {
   BusinessRuleValidationException,
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface ResponderObservacionCommand {
   tramiteId: string;
@@ -26,12 +28,11 @@ export class ResponderObservacionUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: ResponderObservacionCommand): Promise<Tramite> {
+  async execute(command: ResponderObservacionCommand): Promise<WorkflowTransitionResponseDto> {
     if (!command.respuesta || command.respuesta.trim().length === 0) {
       throw new BusinessRuleValidationException('La respuesta a la observación es obligatoria');
     }
 
-    // Regla de negocio: Un interno no puede responder como externo
     if (command.contexto.usuarioTipo !== TipoUsuario.EXTERNO) {
       throw new UnauthorizedActionException('Solo un usuario externo puede responder una observación');
     }
@@ -41,7 +42,6 @@ export class ResponderObservacionUseCase {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
     }
 
-    // Regla de negocio: El usuario externo solo puede responder en su propio trámite
     if (tramite.usuarioExternoId && tramite.usuarioExternoId !== command.contexto.usuarioId) {
       throw new UnauthorizedActionException('No tiene permisos para responder observaciones en este trámite');
     }
@@ -59,6 +59,7 @@ export class ResponderObservacionUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    return await this.tramiteRepository.update(tramite);
+    const updated = await this.tramiteRepository.update(tramite);
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

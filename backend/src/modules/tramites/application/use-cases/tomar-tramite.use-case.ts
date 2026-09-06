@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
@@ -10,6 +9,9 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface TomarTramiteCommand {
   tramiteId: string;
@@ -25,18 +27,16 @@ export class TomarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: TomarTramiteCommand): Promise<Tramite> {
+  async execute(command: TomarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
     }
 
-    // Validación de concurrencia: si ya está asignado a otro operador
     if (tramite.usuarioAsignadoId && tramite.usuarioAsignadoId !== command.contexto.usuarioId) {
       throw new ConcurrencyConflictException('El trámite ya ha sido tomado por otro operador');
     }
 
-    // Validación de área: operadores solo pueden tomar trámites de su área asignada
     if (
       command.contexto.rolInterno === RolInterno.OPERADOR &&
       command.contexto.areaUsuarioId &&
@@ -56,9 +56,13 @@ export class TomarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
+    let updated = tramite;
     if (this.tramiteRepository.updateIfUnassigned) {
-      return await this.tramiteRepository.updateIfUnassigned(tramite);
+      updated = await this.tramiteRepository.updateIfUnassigned(tramite);
+    } else {
+      updated = await this.tramiteRepository.update(tramite);
     }
-    return await this.tramiteRepository.update(tramite);
+
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

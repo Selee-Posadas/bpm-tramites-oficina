@@ -1,10 +1,5 @@
 import { FastifyRequest } from 'fastify';
 
-/**
- * Normaliza y extrae el token Bearer del header Authorization de Fastify,
- * soportando variaciones de mayúsculas/minúsculas ('bearer', 'Bearer', 'BEARER')
- * y espacios múltiples o tabulaciones.
- */
 export function extractBearerToken(request: FastifyRequest): string | null {
   const headers = request.headers as Record<string, unknown>;
   const authHeader = headers['authorization'] ?? headers['Authorization'];

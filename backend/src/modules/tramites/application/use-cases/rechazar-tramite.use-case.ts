@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
@@ -10,6 +9,9 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface RechazarTramiteCommand {
   tramiteId: string;
@@ -26,7 +28,7 @@ export class RechazarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: RechazarTramiteCommand): Promise<Tramite> {
+  async execute(command: RechazarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
     if (!command.motivo || command.motivo.trim().length === 0) {
       throw new BusinessRuleValidationException('El motivo o fundamentación del rechazo es obligatorio');
     }
@@ -53,6 +55,7 @@ export class RechazarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    return await this.tramiteRepository.update(tramite);
+    const updated = await this.tramiteRepository.update(tramite);
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

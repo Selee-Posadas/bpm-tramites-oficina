@@ -14,6 +14,13 @@ import {
   BusinessRuleValidationException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 
+import {
+  TramiteResponseMapper,
+  TramiteCreadoResponseDto,
+} from '../mappers/tramite-response.mapper';
+
+export { TramiteCreadoResponseDto };
+
 export interface CrearTramiteCommand {
   tipoTramiteId: string;
   titulo: string;
@@ -36,45 +43,44 @@ export class CrearTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: CrearTramiteCommand): Promise<Tramite> {
+  async execute(command: CrearTramiteCommand): Promise<TramiteCreadoResponseDto> {
     const tipoTramite = await this.tipoTramiteRepository.findById(command.tipoTramiteId);
     if (!tipoTramite) {
-      throw new EntityNotFoundException('Tipo de Trámite', command.tipoTramiteId);
+      throw new EntityNotFoundException('Tipo de trámite', command.tipoTramiteId);
     }
+
     if (!tipoTramite.activo) {
-      throw new BusinessRuleValidationException('El tipo de trámite seleccionado se encuentra inactivo');
+      throw new BusinessRuleValidationException('El tipo de trámite seleccionado no se encuentra activo');
+    }
+
+    if (command.usuarioTipo === TipoUsuario.EXTERNO && !tipoTramite.permiteInicioExterno) {
+      throw new BusinessRuleValidationException(
+        'Este tipo de trámite no admite inicio por parte de solicitantes externos',
+      );
     }
 
     let origen: OrigenTramite;
-    let areaActualId: string | null = null;
-    let usuarioExternoId: string | null = null;
+    let areaActualId: string;
+    let usuarioExternoId: string | undefined;
 
     if (command.usuarioTipo === TipoUsuario.EXTERNO) {
-      // Circuito 1: Externo -> Interno
-      if (!tipoTramite.permiteInicioExterno) {
-        throw new BusinessRuleValidationException(
-          'Este tipo de trámite no permite ser iniciado por un usuario externo',
-        );
-      }
       origen = OrigenTramite.EXTERNO_INTERNO;
       areaActualId = tipoTramite.areaInicialId;
       usuarioExternoId = command.usuarioId;
     } else {
-      // Circuito iniciado por usuario interno
-      if (tipoTramite.requiereExterno || command.usuarioExternoId) {
-        // Circuito 3: Interno -> Externo
+      if (tipoTramite.requiereExterno) {
         if (!command.usuarioExternoId) {
           throw new BusinessRuleValidationException(
-            'Este tipo de trámite requiere asociar obligatoriamente un usuario externo',
+            'Para este trámite es obligatorio vincular un usuario externo destinatario',
           );
         }
         origen = OrigenTramite.INTERNO_EXTERNO;
-        areaActualId = tipoTramite.areaInicialId;
+        areaActualId = command.areaDestinoId || tipoTramite.areaInicialId;
         usuarioExternoId = command.usuarioExternoId;
       } else {
-        // Circuito 2: Interno -> Interno
         origen = OrigenTramite.INTERNO_INTERNO;
         areaActualId = command.areaDestinoId || tipoTramite.areaInicialId;
+        usuarioExternoId = undefined;
       }
     }
 
@@ -116,6 +122,8 @@ export class CrearTramiteUseCase {
     });
 
     await this.movimientoRepository.save(movimientoInicial);
-    return await this.tramiteRepository.save(tramite);
+    const saved = await this.tramiteRepository.save(tramite);
+
+    return TramiteResponseMapper.toCreadoDto(saved);
   }
 }

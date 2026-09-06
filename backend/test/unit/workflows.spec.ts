@@ -30,37 +30,30 @@ describe('Workflows y Máquinas de Estado (Domain Core)', () => {
     };
 
     it('debe completar el flujo exitoso completo', () => {
-      // 1. BORRADOR -> INGRESADO
       const s1 = workflow.determinarProximoEstado(EstadoTramite.BORRADOR, AccionWorkflow.INGRESAR, externalContext);
       expect(s1).toBe(EstadoTramite.INGRESADO);
 
-      // 2. INGRESADO -> EN_REVISION (Tomar)
       const s2 = workflow.determinarProximoEstado(s1, AccionWorkflow.TOMAR, operatorContext);
       expect(s2).toBe(EstadoTramite.EN_REVISION);
 
-      // 3. EN_REVISION -> OBSERVADO
       const s3 = workflow.determinarProximoEstado(s2, AccionWorkflow.OBSERVAR, {
         ...operatorContext,
         motivo: 'Falta adjuntar constancia de CUIT',
       });
       expect(s3).toBe(EstadoTramite.OBSERVADO);
 
-      // 4. OBSERVADO -> INGRESADO (Respuesta externo)
       const s4 = workflow.determinarProximoEstado(s3, AccionWorkflow.RESPONDER_OBSERVACION, {
         ...externalContext,
         motivo: 'Se adjunta la constancia solicitada',
       });
       expect(s4).toBe(EstadoTramite.INGRESADO);
 
-      // 5. INGRESADO -> EN_REVISION (Retomar)
       const s5 = workflow.determinarProximoEstado(s4, AccionWorkflow.TOMAR, operatorContext);
       expect(s5).toBe(EstadoTramite.EN_REVISION);
 
-      // 6. EN_REVISION -> APROBADO
       const s6 = workflow.determinarProximoEstado(s5, AccionWorkflow.APROBAR, operatorContext);
       expect(s6).toBe(EstadoTramite.APROBADO);
 
-      // 7. APROBADO -> CERRADO
       const s7 = workflow.determinarProximoEstado(s6, AccionWorkflow.CERRAR, operatorContext);
       expect(s7).toBe(EstadoTramite.CERRADO);
     });
@@ -142,15 +135,12 @@ describe('Workflows y Máquinas de Estado (Domain Core)', () => {
     };
 
     it('debe ejecutar el flujo completo con derivación entre áreas', () => {
-      // BORRADOR -> INGRESADO
       const s1 = workflow.determinarProximoEstado(EstadoTramite.BORRADOR, AccionWorkflow.INGRESAR, operatorContext);
       expect(s1).toBe(EstadoTramite.INGRESADO);
 
-      // INGRESADO -> EN_REVISION (Tomar)
       const s2 = workflow.determinarProximoEstado(s1, AccionWorkflow.TOMAR, operatorContext);
       expect(s2).toBe(EstadoTramite.EN_REVISION);
 
-      // EN_REVISION -> DERIVADO
       const s3 = workflow.determinarProximoEstado(s2, AccionWorkflow.DERIVAR, {
         ...operatorContext,
         areaDestinoId: 'area-b',
@@ -158,7 +148,6 @@ describe('Workflows y Máquinas de Estado (Domain Core)', () => {
       });
       expect(s3).toBe(EstadoTramite.DERIVADO);
 
-      // DERIVADO -> EN_REVISION (Tomar en nueva área)
       const s4 = workflow.determinarProximoEstado(s3, AccionWorkflow.TOMAR, {
         usuarioTipo: TipoUsuario.INTERNO,
         usuarioId: 'op-2',
@@ -167,11 +156,9 @@ describe('Workflows y Máquinas de Estado (Domain Core)', () => {
       });
       expect(s4).toBe(EstadoTramite.EN_REVISION);
 
-      // EN_REVISION -> RECHAZADO
       const s5 = workflow.determinarProximoEstado(s4, AccionWorkflow.RECHAZAR, operatorContext);
       expect(s5).toBe(EstadoTramite.RECHAZADO);
 
-      // RECHAZADO -> CERRADO
       const s6 = workflow.determinarProximoEstado(s5, AccionWorkflow.CERRAR, operatorContext);
       expect(s6).toBe(EstadoTramite.CERRADO);
     });
@@ -208,29 +195,24 @@ describe('Workflows y Máquinas de Estado (Domain Core)', () => {
     };
 
     it('debe ejecutar el ciclo de requerimiento e intervención externa', () => {
-      // BORRADOR -> INGRESADO
       const s1 = workflow.determinarProximoEstado(EstadoTramite.BORRADOR, AccionWorkflow.INGRESAR, internalContext);
       expect(s1).toBe(EstadoTramite.INGRESADO);
 
-      // INGRESADO -> ESPERANDO_EXTERNO
       const s2 = workflow.determinarProximoEstado(s1, AccionWorkflow.SOLICITAR_INTERVENCION_EXTERNA, {
         ...internalContext,
         motivo: 'Se requiere comprobante de pago actualizado',
       });
       expect(s2).toBe(EstadoTramite.ESPERANDO_EXTERNO);
 
-      // ESPERANDO_EXTERNO -> ESPERANDO_INTERNO (Externo responde)
       const s3 = workflow.determinarProximoEstado(s2, AccionWorkflow.RESPONDER_INTERVENCION_EXTERNA, {
         ...externalContext,
         motivo: 'Comprobante adjunto',
       });
       expect(s3).toBe(EstadoTramite.ESPERANDO_INTERNO);
 
-      // ESPERANDO_INTERNO -> EN_REVISION (Interno retoma)
       const s4 = workflow.determinarProximoEstado(s3, AccionWorkflow.TOMAR, internalContext);
       expect(s4).toBe(EstadoTramite.EN_REVISION);
 
-      // EN_REVISION -> APROBADO -> CERRADO
       const s5 = workflow.determinarProximoEstado(s4, AccionWorkflow.APROBAR, internalContext);
       expect(s5).toBe(EstadoTramite.APROBADO);
       const s6 = workflow.determinarProximoEstado(s5, AccionWorkflow.CERRAR, internalContext);

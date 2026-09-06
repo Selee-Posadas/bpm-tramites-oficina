@@ -38,7 +38,6 @@ export class ExternalAuthGuard implements CanActivate {
     try {
       const payload = this.jwtService.verify<JwtExternalPayload>(token);
 
-      // Aislamiento estricto de identidades: solo identidades externas permitidas
       if (payload.tipo !== TipoUsuario.EXTERNO) {
         this.logger.warn(
           `[ExternalAuthGuard] Acceso rechazado (403): Intento de acceso a recurso externo con identidad tipo "${payload.tipo}". Usuario ID: ${payload.sub}, Email: ${payload.email}, Ruta: ${request.method} ${request.url}`,

@@ -23,7 +23,6 @@ export class SlaCalculatorService {
     const fechaLimiteMs = fechaCreacionMs + duracionTotalMs;
     const fechaLimite = new Date(fechaLimiteMs);
 
-    // Si el trámite ya está concluido
     if (
       tramite.estado === 'APROBADO' ||
       tramite.estado === 'RECHAZADO' ||

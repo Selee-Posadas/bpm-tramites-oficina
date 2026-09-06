@@ -37,3 +37,9 @@ export class ConcurrencyConflictException extends DomainException {
     super(message);
   }
 }
+
+export class DuplicateEntityException extends DomainException {
+  constructor(entityName: string, field: string, value: string) {
+    super(`Ya existe un(a) ${entityName} con ${field} '${value}'`);
+  }
+}

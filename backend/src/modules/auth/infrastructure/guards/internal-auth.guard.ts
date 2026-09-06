@@ -41,7 +41,6 @@ export class InternalAuthGuard implements CanActivate {
     try {
       const payload = this.jwtService.verify<JwtInternalPayload>(token);
 
-      // Aislamiento estricto de identidades: solo identidades internas permitidas
       if (payload.tipo !== TipoUsuario.INTERNO) {
         this.logger.warn(
           `[InternalAuthGuard] Acceso rechazado (403): Intento de acceso a recurso interno con identidad tipo "${payload.tipo}". Usuario ID: ${payload.sub}, Email: ${payload.email}, Ruta: ${request.method} ${request.url}`,

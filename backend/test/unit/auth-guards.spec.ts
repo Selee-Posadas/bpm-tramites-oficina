@@ -73,7 +73,6 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
         fail('Se esperaba ForbiddenException');
       } catch (error) {
         expect(error).toBeInstanceOf(ForbiddenException);
-        // Prevención de information leakage: no revelar que se usó un token externo
         expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
       }
     });
@@ -88,11 +87,9 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
         areaId: 'area-1',
       });
 
-      // lowercase bearer con espacios adicionales
       const contextLower = createMockContext({ authorization: `bearer   ${token}` });
       expect(guard.canActivate(contextLower)).toBe(true);
 
-      // uppercase BEARER
       const contextUpper = createMockContext({ authorization: `BEARER ${token}` });
       expect(guard.canActivate(contextUpper)).toBe(true);
     });
@@ -119,7 +116,6 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
         fail('Se esperaba ForbiddenException');
       } catch (error) {
         expect(error).toBeInstanceOf(ForbiddenException);
-        // Prevención de information leakage
         expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
       }
     });
@@ -163,7 +159,6 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ForbiddenException);
         expect((error as ForbiddenException).message).toBe('No tiene permisos para acceder a este recurso');
-        // No debe contener nombres de roles en el mensaje del cliente
         expect((error as ForbiddenException).message).not.toContain('SUPERVISOR');
         expect((error as ForbiddenException).message).not.toContain('OPERADOR');
       }

@@ -9,6 +9,9 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface AsignarTramiteCommand {
   tramiteId: string;
@@ -25,13 +28,12 @@ export class AsignarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: AsignarTramiteCommand): Promise<Tramite> {
+  async execute(command: AsignarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
     }
 
-    // Regla de negocio: Solo SUPERVISOR y ADMIN pueden reasignar
     if (
       command.contexto.rolInterno !== RolInterno.SUPERVISOR &&
       command.contexto.rolInterno !== RolInterno.ADMIN
@@ -41,7 +43,6 @@ export class AsignarTramiteUseCase {
       );
     }
 
-    // Si es supervisor, debe pertenecer al área actual del trámite
     if (
       command.contexto.rolInterno === RolInterno.SUPERVISOR &&
       command.contexto.areaUsuarioId &&
@@ -66,6 +67,7 @@ export class AsignarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    return await this.tramiteRepository.update(tramite);
+    const updated = await this.tramiteRepository.update(tramite);
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

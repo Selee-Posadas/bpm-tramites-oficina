@@ -41,7 +41,6 @@ export class RolesGuard implements CanActivate {
       this.logger.warn(
         `[RolesGuard] Acceso rechazado (403): Permisos insuficientes. Usuario ID: ${user.id}, Rol actual: "${user.rolInterno}". Roles requeridos: [${requiredRoles.join(', ')}]. Ruta: ${request.method} ${request.url}`,
       );
-      // Prevención estricta de Information Leakage: mensaje genérico y opaco hacia el cliente
       throw new ForbiddenException('No tiene permisos para acceder a este recurso');
     }
 

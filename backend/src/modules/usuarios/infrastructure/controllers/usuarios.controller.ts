@@ -4,49 +4,26 @@ import {
   Param,
   Query,
   UseGuards,
-  Inject,
-  NotFoundException,
 } from '@nestjs/common';
-import {
-  IUsuarioRepository,
-  USUARIO_REPOSITORY_TOKEN,
-} from '../../domain/repositories/usuario.repository.interface';
+import { ListarUsuariosInternosUseCase } from '../../application/use-cases/listar-usuarios-internos.use-case';
+import { ObtenerUsuarioInternoUseCase } from '../../application/use-cases/obtener-usuario-interno.use-case';
 import { InternalAuthGuard } from '../../../auth/infrastructure/guards/internal-auth.guard';
 
 @Controller('usuarios')
 @UseGuards(InternalAuthGuard)
 export class UsuariosController {
   constructor(
-    @Inject(USUARIO_REPOSITORY_TOKEN)
-    private readonly usuarioRepository: IUsuarioRepository,
+    private readonly listarUsuariosInternosUseCase: ListarUsuariosInternosUseCase,
+    private readonly obtenerUsuarioInternoUseCase: ObtenerUsuarioInternoUseCase,
   ) {}
 
   @Get('internos')
   async findAllInternos(@Query('areaId') areaId?: string) {
-    const usuarios = await this.usuarioRepository.findAllInternos(areaId);
-    return usuarios.map((u) => ({
-      id: u.id,
-      email: u.email,
-      nombre: u.nombre,
-      rol: u.rol,
-      areaId: u.areaId,
-      activo: u.activo,
-    }));
+    return await this.listarUsuariosInternosUseCase.execute(areaId);
   }
 
   @Get('internos/:id')
   async findInternoById(@Param('id') id: string) {
-    const user = await this.usuarioRepository.findInternoById(id);
-    if (!user) {
-      throw new NotFoundException(`Usuario interno con ID ${id} no encontrado`);
-    }
-    return {
-      id: user.id,
-      email: user.email,
-      nombre: user.nombre,
-      rol: user.rol,
-      areaId: user.areaId,
-      activo: user.activo,
-    };
+    return await this.obtenerUsuarioInternoUseCase.execute(id);
   }
 }

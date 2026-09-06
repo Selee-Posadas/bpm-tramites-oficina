@@ -11,6 +11,7 @@ import {
   BusinessRuleValidationException,
   ConcurrencyConflictException,
   DomainException,
+  DuplicateEntityException,
   EntityNotFoundException,
   InvalidStateTransitionException,
   UnauthorizedActionException,
@@ -63,7 +64,10 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       status = HttpStatus.UNPROCESSABLE_ENTITY;
       error = 'Unprocessable Entity';
       message = exception.message;
-    } else if (exception instanceof ConcurrencyConflictException) {
+    } else if (
+      exception instanceof ConcurrencyConflictException ||
+      exception instanceof DuplicateEntityException
+    ) {
       status = HttpStatus.CONFLICT;
       error = 'Conflict';
       message = exception.message;

@@ -13,16 +13,13 @@ async function bootstrap(): Promise<void> {
     new FastifyAdapter({ logger: false }),
   );
 
-  // Global prefix: /api
   app.setGlobalPrefix('api');
 
-  // CORS
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,
   });
 
-  // Global Validation Pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -34,10 +31,8 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // Global Exception Filter
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  // Swagger / OpenAPI documentation on /api/docs
   const config = new DocumentBuilder()
     .setTitle('BPM de Trámites de Oficina - API')
     .setDescription(

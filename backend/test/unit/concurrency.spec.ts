@@ -36,7 +36,6 @@ describe('Control de Concurrencia - TOMAR_TRAMITE', () => {
   });
 
   it('debe evitar race condition cuando dos operadores intentan tomar el mismo trámite en simultáneo', async () => {
-    // Estado inicial: Trámite INGRESADO sin operador asignado
     let asignadoActual: string | null = null;
 
     const tramite = new Tramite({
@@ -55,7 +54,6 @@ describe('Control de Concurrencia - TOMAR_TRAMITE', () => {
     });
 
     tramiteRepoMock.findById.mockImplementation(async () => {
-      // Simula lectura simultánea de la base de datos
       return new Tramite({
         id: tramite.id,
         numero: tramite.numero,
@@ -72,7 +70,6 @@ describe('Control de Concurrencia - TOMAR_TRAMITE', () => {
       });
     });
 
-    // Simula la verificación condicional atómica a nivel base de datos
     tramiteRepoMock.updateIfUnassigned = jest.fn().mockImplementation(async (t: Tramite) => {
       if (asignadoActual !== null && asignadoActual !== t.usuarioAsignadoId) {
         throw new ConcurrencyConflictException(
@@ -99,14 +96,11 @@ describe('Control de Concurrencia - TOMAR_TRAMITE', () => {
       areaUsuarioId: 'area-compras',
     };
 
-    // Disparo simultáneo con Promise.allSettled
     const [resultadoA, resultadoB] = await Promise.allSettled([
       useCase.execute({ tramiteId: 'tramite-concurrente-1', contexto: operadorAContext }),
       useCase.execute({ tramiteId: 'tramite-concurrente-1', contexto: operadorBContext }),
     ]);
 
-    // Verificación de invarianza de concurrencia:
-    // Exactamente 1 debe ser exitoso (fulfilled) y exactamente 1 debe fallar con 409 (rejected)
     const exitosos = [resultadoA, resultadoB].filter((r) => r.status === 'fulfilled');
     const fallidos = [resultadoA, resultadoB].filter((r) => r.status === 'rejected');
 
@@ -117,7 +111,6 @@ describe('Control de Concurrencia - TOMAR_TRAMITE', () => {
     expect(fallido.reason).toBeInstanceOf(ConcurrencyConflictException);
     expect(fallido.reason.message).toContain('El trámite ya ha sido tomado');
 
-    // El trámite en base de datos quedó asignado a exactamente uno de los dos operadores
     expect(asignadoActual).not.toBeNull();
     expect(['operador-A', 'operador-B']).toContain(asignadoActual);
   });

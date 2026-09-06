@@ -15,17 +15,14 @@ export class InternoInternoWorkflow implements ITramiteWorkflow {
     accion: AccionWorkflow,
     contexto: WorkflowContext,
   ): void {
-    // 1. Solo usuarios internos pueden operar en el circuito Interno-Interno
     if (contexto.usuarioTipo !== TipoUsuario.INTERNO) {
       throw new UnauthorizedActionException('Solo personal interno puede operar en el circuito Interno-Interno');
     }
 
-    // 2. Auditor no puede realizar modificaciones
     if (contexto.rolInterno === RolInterno.AUDITOR) {
       throw new UnauthorizedActionException('Los usuarios con rol AUDITOR solo tienen permisos de lectura');
     }
 
-    // 3. No aprobar en BORRADOR
     if (
       estadoActual === EstadoTramite.BORRADOR &&
       (accion === AccionWorkflow.APROBAR || accion === AccionWorkflow.RECHAZAR)
@@ -37,7 +34,6 @@ export class InternoInternoWorkflow implements ITramiteWorkflow {
       );
     }
 
-    // 4. Solo cerrar trámites Aprobados, Rechazados o Cancelados
     if (accion === AccionWorkflow.CERRAR) {
       if (
         estadoActual !== EstadoTramite.APROBADO &&
@@ -53,7 +49,6 @@ export class InternoInternoWorkflow implements ITramiteWorkflow {
       return;
     }
 
-    // 5. Cancelación
     if (accion === AccionWorkflow.CANCELAR) {
       if (
         estadoActual === EstadoTramite.APROBADO ||
@@ -70,7 +65,6 @@ export class InternoInternoWorkflow implements ITramiteWorkflow {
       return;
     }
 
-    // 6. Transiciones de estado
     switch (estadoActual) {
       case EstadoTramite.BORRADOR:
         if (accion !== AccionWorkflow.INGRESAR) {

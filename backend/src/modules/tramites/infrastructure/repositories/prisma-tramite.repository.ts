@@ -144,8 +144,6 @@ export class PrismaTramiteRepository implements ITramiteRepository {
   async updateIfUnassigned(tramite: Tramite): Promise<Tramite> {
     const data = TramiteMapper.toPersistence(tramite);
     return await this.prisma.$transaction(async (tx) => {
-      // Intento de actualización atómica condicional:
-      // solo actualiza si usuarioAsignadoId sigue siendo null o ya pertenecía a este operador
       const updateResult = await tx.tramite.updateMany({
         where: {
           id: tramite.id,

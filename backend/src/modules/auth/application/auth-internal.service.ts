@@ -32,7 +32,6 @@ export class AuthInternalService {
     }
 
     if (!user) {
-      // Si aún no se corrió el seed, crear un usuario interno mock on-the-fly para pruebas fluidas
       let area = await this.prisma.area.findFirst();
       if (!area) {
         area = await this.prisma.area.create({

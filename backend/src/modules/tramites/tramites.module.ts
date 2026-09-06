@@ -5,7 +5,6 @@ import { TiposTramiteModule } from '../tipos-tramite/tipos-tramite.module';
 import { AreasModule } from '../areas/areas.module';
 import { UsuariosModule } from '../usuarios/usuarios.module';
 
-// Repositories
 import { TRAMITE_REPOSITORY_TOKEN } from './domain/repositories/tramite.repository.interface';
 import { PrismaTramiteRepository } from './infrastructure/repositories/prisma-tramite.repository';
 import { MOVIMIENTO_TRAMITE_REPOSITORY_TOKEN } from './domain/repositories/movimiento-tramite.repository.interface';
@@ -15,7 +14,6 @@ import { PrismaComentarioTramiteRepository } from './infrastructure/repositories
 import { DOCUMENTO_TRAMITE_REPOSITORY_TOKEN } from './domain/repositories/documento-tramite.repository.interface';
 import { PrismaDocumentoTramiteRepository } from './infrastructure/repositories/prisma-documento-tramite.repository';
 
-// Use Cases
 import { CrearTramiteUseCase } from './application/use-cases/crear-tramite.use-case';
 import { IngresarTramiteUseCase } from './application/use-cases/ingresar-tramite.use-case';
 import { TomarTramiteUseCase } from './application/use-cases/tomar-tramite.use-case';
@@ -30,8 +28,16 @@ import { RechazarTramiteUseCase } from './application/use-cases/rechazar-tramite
 import { CerrarTramiteUseCase } from './application/use-cases/cerrar-tramite.use-case';
 import { CancelarTramiteUseCase } from './application/use-cases/cancelar-tramite.use-case';
 import { ObtenerTramiteUseCase } from './application/use-cases/obtener-tramite.use-case';
+import { ListarTramitesUseCase } from './application/use-cases/listar-tramites.use-case';
+import { ModificarBorradorUseCase } from './application/use-cases/modificar-borrador.use-case';
+import { EliminarTramiteBorradorUseCase } from './application/use-cases/eliminar-tramite-borrador.use-case';
+import { AdjuntarDocumentoUseCase } from './application/use-cases/adjuntar-documento.use-case';
+import { ListarDocumentosUseCase } from './application/use-cases/listar-documentos.use-case';
+import { EliminarDocumentoUseCase } from './application/use-cases/eliminar-documento.use-case';
+import { AgregarComentarioUseCase } from './application/use-cases/agregar-comentario.use-case';
+import { ListarComentariosUseCase } from './application/use-cases/listar-comentarios.use-case';
+import { ObtenerEstadisticasDashboardUseCase } from './application/use-cases/obtener-estadisticas-dashboard.use-case';
 
-// Controllers
 import { TramitesController } from './infrastructure/controllers/tramites.controller';
 import { WorkflowController } from './infrastructure/controllers/workflow.controller';
 import { ComentariosController } from './infrastructure/controllers/comentarios.controller';
@@ -84,6 +90,15 @@ import { DashboardController } from './infrastructure/controllers/dashboard.cont
     CerrarTramiteUseCase,
     CancelarTramiteUseCase,
     ObtenerTramiteUseCase,
+    ListarTramitesUseCase,
+    ModificarBorradorUseCase,
+    EliminarTramiteBorradorUseCase,
+    AdjuntarDocumentoUseCase,
+    ListarDocumentosUseCase,
+    EliminarDocumentoUseCase,
+    AgregarComentarioUseCase,
+    ListarComentariosUseCase,
+    ObtenerEstadisticasDashboardUseCase,
   ],
   exports: [
     TRAMITE_REPOSITORY_TOKEN,

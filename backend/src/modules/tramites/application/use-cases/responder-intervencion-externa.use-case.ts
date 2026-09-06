@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
@@ -10,6 +9,9 @@ import {
   BusinessRuleValidationException,
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
+import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
+import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import * as crypto from 'crypto';
 
 export interface ResponderIntervencionExternaCommand {
   tramiteId: string;
@@ -26,7 +28,7 @@ export class ResponderIntervencionExternaUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: ResponderIntervencionExternaCommand): Promise<Tramite> {
+  async execute(command: ResponderIntervencionExternaCommand): Promise<WorkflowTransitionResponseDto> {
     if (!command.respuesta || command.respuesta.trim().length === 0) {
       throw new BusinessRuleValidationException('La respuesta o detalle de documentación aportada es obligatoria');
     }
@@ -57,6 +59,7 @@ export class ResponderIntervencionExternaUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    return await this.tramiteRepository.update(tramite);
+    const updated = await this.tramiteRepository.update(tramite);
+    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }
