@@ -1,0 +1,227 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RolInterno {
+  ADMIN
+  MESA_ENTRADA
+  OPERADOR
+  SUPERVISOR
+  AUDITOR
+}
+
+enum EstadoUsuarioExterno {
+  PENDIENTE_VERIFICACION
+  ACTIVO
+  BLOQUEADO
+}
+
+enum OrigenTramite {
+  INTERNO_INTERNO
+  INTERNO_EXTERNO
+  EXTERNO_INTERNO
+}
+
+enum EstadoTramite {
+  BORRADOR
+  INGRESADO
+  EN_REVISION
+  OBSERVADO
+  ESPERANDO_EXTERNO
+  ESPERANDO_INTERNO
+  APROBADO
+  RECHAZADO
+  CANCELADO
+  CERRADO
+}
+
+enum PrioridadTramite {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum TipoUsuario {
+  INTERNO
+  EXTERNO
+}
+
+enum AccionWorkflow {
+  CREAR
+  INGRESAR
+  TOMAR
+  ASIGNAR
+  DERIVAR
+  OBSERVAR
+  RESPONDER_OBSERVACION
+  SOLICITAR_INTERVENCION_EXTERNA
+  RESPONDER_INTERVENCION_EXTERNA
+  APROBAR
+  RECHAZAR
+  CANCELAR
+  CERRAR
+}
+
+enum VisibilidadComentario {
+  INTERNA
+  EXTERNA
+  TODOS
+}
+
+model Area {
+  id              String           @id @default(uuid()) @db.Uuid
+  nombre          String           @db.VarChar(150)
+  codigo          String           @unique @db.VarChar(50)
+  activa          Boolean          @default(true)
+  fechaCreacion   DateTime         @default(now()) @map("fecha_creacion")
+  
+  usuarios        UsuarioInterno[]
+  tiposTramite    TipoTramite[]
+  tramites        Tramite[]        @relation("AreaActual")
+
+  @@map("areas")
+}
+
+model UsuarioInterno {
+  id                 String           @id @default(uuid()) @db.Uuid
+  nombre             String           @db.VarChar(150)
+  email              String           @unique @db.VarChar(150)
+  passwordHash       String?          @map("password_hash") @db.VarChar(255)
+  areaId             String           @map("area_id") @db.Uuid
+  area               Area             @relation(fields: [areaId], references: [id])
+  rol                RolInterno
+  azureObjectId      String?          @unique @map("azure_object_id") @db.VarChar(100)
+  activo             Boolean          @default(true)
+  fechaCreacion      DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
+
+  tramitesAsignados  Tramite[]        @relation("UsuarioAsignado")
+
+  @@map("usuarios_internos")
+}
+
+model UsuarioExterno {
+  id                 String               @id @default(uuid()) @db.Uuid
+  nombre             String               @db.VarChar(150)
+  email              String               @unique @db.VarChar(150)
+  passwordHash       String               @map("password_hash") @db.VarChar(255)
+  documento          String               @db.VarChar(50)
+  organizacion       String               @db.VarChar(150)
+  estado             EstadoUsuarioExterno @default(ACTIVO)
+  fechaAlta          DateTime             @default(now()) @map("fecha_alta")
+  fechaActualizacion DateTime             @updatedAt @map("fecha_actualizacion")
+
+  tramites           Tramite[]            @relation("UsuarioExterno")
+
+  @@map("usuarios_externos")
+}
+
+model TipoTramite {
+  id                   String    @id @default(uuid()) @db.Uuid
+  codigo               String    @unique @db.VarChar(50)
+  nombre               String    @db.VarChar(150)
+  descripcion          String    @db.Text
+  activo               Boolean   @default(true)
+  requiereExterno      Boolean   @default(false) @map("requiere_externo")
+  permiteInicioExterno Boolean   @default(false) @map("permite_inicio_externo")
+  slaHoras             Int       @map("sla_horas")
+  areaInicialId        String    @map("area_inicial_id") @db.Uuid
+  areaInicial          Area      @relation(fields: [areaInicialId], references: [id])
+  fechaCreacion        DateTime  @default(now()) @map("fecha_creacion")
+
+  tramites             Tramite[]
+
+  @@map("tipos_tramite")
+}
+
+model Tramite {
+  id                 String           @id @default(uuid()) @db.Uuid
+  numero             String           @unique @db.VarChar(50)
+  tipoTramiteId      String           @map("tipo_tramite_id") @db.Uuid
+  tipoTramite        TipoTramite      @relation(fields: [tipoTramiteId], references: [id])
+  titulo             String           @db.VarChar(200)
+  descripcion        String           @db.Text
+  origen             OrigenTramite
+  estado             EstadoTramite    @default(BORRADOR)
+  prioridad          PrioridadTramite @default(MEDIA)
+  areaActualId       String?          @map("area_actual_id") @db.Uuid
+  areaActual         Area?            @relation("AreaActual", fields: [areaActualId], references: [id])
+  usuarioAsignadoId  String?          @map("usuario_asignado_id") @db.Uuid
+  usuarioAsignado    UsuarioInterno?  @relation("UsuarioAsignado", fields: [usuarioAsignadoId], references: [id])
+  usuarioExternoId   String?          @map("usuario_externo_id") @db.Uuid
+  usuarioExterno     UsuarioExterno?  @relation("UsuarioExterno", fields: [usuarioExternoId], references: [id])
+  creadoPorTipo      TipoUsuario      @map("creado_por_tipo")
+  creadoPorId        String           @map("creado_por_id") @db.Uuid
+  fechaCreacion      DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
+  fechaCierre        DateTime?        @map("fecha_cierre")
+
+  movimientos        MovimientoTramite[]
+  documentos         DocumentoTramite[]
+  comentarios        ComentarioTramite[]
+
+  @@index([estado])
+  @@index([origen])
+  @@index([areaActualId])
+  @@index([usuarioAsignadoId])
+  @@index([usuarioExternoId])
+  @@index([fechaCreacion])
+  @@map("tramites")
+}
+
+model MovimientoTramite {
+  id             String         @id @default(uuid()) @db.Uuid
+  tramiteId      String         @map("tramite_id") @db.Uuid
+  tramite        Tramite        @relation(fields: [tramiteId], references: [id], onDelete: Cascade)
+  estadoAnterior EstadoTramite? @map("estado_anterior")
+  estadoNuevo    EstadoTramite  @map("estado_nuevo")
+  areaAnteriorId String?        @map("area_anterior_id") @db.Uuid
+  areaNuevaId    String?        @map("area_nueva_id") @db.Uuid
+  usuarioTipo    TipoUsuario    @map("usuario_tipo")
+  usuarioId      String         @map("usuario_id") @db.Uuid
+  accion         AccionWorkflow
+  comentario     String?        @db.Text
+  metadata       Json?
+  fecha          DateTime       @default(now())
+
+  @@index([tramiteId])
+  @@index([fecha])
+  @@map("movimientos_tramite")
+}
+
+model DocumentoTramite {
+  id            String      @id @default(uuid()) @db.Uuid
+  tramiteId     String      @map("tramite_id") @db.Uuid
+  tramite       Tramite     @relation(fields: [tramiteId], references: [id], onDelete: Cascade)
+  nombreArchivo String      @map("nombre_archivo") @db.VarChar(255)
+  mimeType      String      @map("mime_type") @db.VarChar(100)
+  size          Int
+  storageKey    String      @map("storage_key") @db.VarChar(500)
+  subidoPorTipo TipoUsuario @map("subido_por_tipo")
+  subidoPorId   String      @map("subido_por_id") @db.Uuid
+  fechaCarga    DateTime    @default(now()) @map("fecha_carga")
+
+  @@index([tramiteId])
+  @@map("documentos_tramite")
+}
+
+model ComentarioTramite {
+  id          String                @id @default(uuid()) @db.Uuid
+  tramiteId   String                @map("tramite_id") @db.Uuid
+  tramite     Tramite               @relation(fields: [tramiteId], references: [id], onDelete: Cascade)
+  mensaje     String                @db.Text
+  visibilidad VisibilidadComentario @default(INTERNA)
+  autorTipo   TipoUsuario           @map("autor_tipo")
+  autorId     String                @map("autor_id") @db.Uuid
+  fecha       DateTime              @default(now())
+
+  @@index([tramiteId])
+  @@index([visibilidad])
+  @@map("comentarios_tramite")
+}
