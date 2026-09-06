@@ -25,6 +25,7 @@ export interface ITramiteRepository {
   findAll(filtros?: TramiteFiltros): Promise<{ tramites: Tramite[]; total: number }>;
   save(tramite: Tramite): Promise<Tramite>;
   update(tramite: Tramite): Promise<Tramite>;
+  updateIfUnassigned?(tramite: Tramite): Promise<Tramite>;
   delete(id: string): Promise<void>;
   countByEstado(): Promise<Record<EstadoTramite, number>>;
   countByOrigen(): Promise<Record<OrigenTramite, number>>;

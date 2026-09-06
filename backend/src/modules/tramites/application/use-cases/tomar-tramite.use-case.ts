@@ -56,6 +56,9 @@ export class TomarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
+    if (this.tramiteRepository.updateIfUnassigned) {
+      return await this.tramiteRepository.updateIfUnassigned(tramite);
+    }
     return await this.tramiteRepository.update(tramite);
   }
 }

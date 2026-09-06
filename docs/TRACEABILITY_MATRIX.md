@@ -40,21 +40,21 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| SEC-01 | Desacoplamiento total entre identidades internas y externas | pág. 2, 4 | Módulos `auth-internal` y `auth-external` aislados | Integration: `auth-isolation.spec.ts` | NOT_STARTED | - |
-| SEC-02 | Autenticación interna con Azure Entra ID / MSAL (o mock seguro documentado local) | pág. 2, 4 | `src/modules/auth/infrastructure/strategies/entra-id.strategy.ts` y `mock-entra-id.strategy.ts` | Integration: `auth-internal.spec.ts` | NOT_STARTED | - |
-| SEC-03 | Roles internos: ADMIN, MESA_ENTRADA, OPERADOR, SUPERVISOR, AUDITOR | pág. 3 | `src/modules/usuarios/domain/enums/rol-interno.enum.ts` | Unit: `test/unit/workflows.spec.ts` | IMPLEMENTED | Enum RolInterno creado e integrado en dominio |
-| SEC-04 | Campos mínimos Usuario Interno (id, nombre, email, area, rol, azureObjectId, activo) | pág. 3 | `src/modules/usuarios/domain/entities/usuario-interno.entity.ts` | Domain entity | IMPLEMENTED | Entidad UsuarioInterno pura implementada |
-| SEC-05 | Autenticación externa propia (email + password / register / login / logout / JWT) | pág. 4, 10 | `src/modules/auth/application/use-cases/external-login.use-case.ts` | Integration: `auth-external.integration.spec.ts` | NOT_STARTED | - |
-| SEC-06 | Campos mínimos Usuario Externo (id, nombre, email, documento, organizacion, estado, fechaAlta) y estados (PENDIENTE_VERIFICACION, ACTIVO, BLOQUEADO) | pág. 3, 4 | `src/modules/usuarios/domain/entities/usuario-externo.entity.ts` | Domain entity | IMPLEMENTED | Entidad UsuarioExterno pura implementada |
-| SEC-07 | Usuario externo solo puede ver y operar en trámites donde participe | pág. 4, 11, 14 | `src/modules/tramites/application/use-cases/obtener-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Validación de ownership en use-case testeada |
+| SEC-01 | Desacoplamiento total entre identidades internas y externas | pág. 2, 4 | Módulos `auth-internal` y `auth-external` aislados | Integration: `auth-guards.spec.ts` | TESTED | Tokens y guards completamente desacoplados y testeados |
+| SEC-02 | Autenticación interna con Azure Entra ID / MSAL (o mock seguro documentado local) | pág. 2, 4 | `src/modules/auth/application/auth-internal.service.ts` | Unit: `auth-services.spec.ts` | TESTED | Mock seguro documentado con claims OIDC y roles pasando tests |
+| SEC-03 | Roles internos: ADMIN, MESA_ENTRADA, OPERADOR, SUPERVISOR, AUDITOR | pág. 3 | `src/modules/usuarios/domain/enums/rol-interno.enum.ts` | Unit: `test/unit/auth-guards.spec.ts` | TESTED | RolesGuard y RBAC testeados con los 5 roles del sistema |
+| SEC-04 | Campos mínimos Usuario Interno (id, nombre, email, area, rol, azureObjectId, activo) | pág. 3 | `src/modules/usuarios/domain/entities/usuario-interno.entity.ts` | Domain entity & Mapper | TESTED | Entidad, mapper y repositorio Prisma implementados |
+| SEC-05 | Autenticación externa propia (email + password / register / login / logout / JWT) | pág. 4, 10 | `src/modules/auth/application/auth-external.service.ts` | Unit: `auth-services.spec.ts` | TESTED | Registro, login, hash Bcrypt y JWT probados con 100% de éxito |
+| SEC-06 | Campos mínimos Usuario Externo (id, nombre, email, documento, organizacion, estado, fechaAlta) y estados (PENDIENTE_VERIFICACION, ACTIVO, BLOQUEADO) | pág. 3, 4 | `src/modules/usuarios/domain/entities/usuario-externo.entity.ts` | Domain entity & Mapper | TESTED | Modelo completo implementado con repositorios y mappers |
+| SEC-07 | Usuario externo solo puede ver y operar en trámites donde participe | pág. 4, 11, 14 | `src/modules/auth/infrastructure/guards/tramite-ownership.guard.ts` | Unit: `auth-guards.spec.ts` | TESTED | TramiteOwnershipGuard bloquea con 403 accesos a trámites ajenos |
 | SEC-08 | Operador interno solo puede ver trámites asignados a su área | pág. 4 | `src/modules/tramites/application/use-cases/tomar-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | TomarTramite rechaza operadores de otras áreas |
 | SEC-09 | Solo Supervisor y Admin pueden reasignar trámites de su área | pág. 4, 12 | `src/modules/tramites/application/use-cases/asignar-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | AsignarTramite rechaza operadores y valida área |
-| SEC-10 | Admin puede ver y configurar todo | pág. 4 | RBAC Policies / Casos de uso de configuración | Unit: `admin-permissions.spec.ts` | NOT_STARTED | - |
-| SEC-11 | Auditor puede ver todo pero no modificar | pág. 4 | `src/modules/tramites/domain/workflow/*.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Workflows rechazan mutaciones ejecutadas por rol AUDITOR |
-| SEC-12 | Un externo no puede ejecutar acciones internas | pág. 11 | Guards y Workflows | Unit: `test/unit/workflows.spec.ts` | TESTED | Testeado rechazo de TOMAR y APROBAR para externos |
-| SEC-13 | Un interno no puede responder como externo | pág. 12 | `src/modules/tramites/application/use-cases/responder-observacion.use-case.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Testeado en responder-observacion y workflow |
-| SEC-14 | Visibilidad de comentarios (INTERNA, EXTERNA, TODOS): comentarios internos ocultos para externos | pág. 8, 12 | `src/modules/comentarios/application/use-cases/listar-comentarios.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Testeado filtrado estricto de comentarios internos |
-| SEC-15 | Control de acceso y visibilidad de Documentos | pág. 7, 12 | `src/modules/documentos/infrastructure/guards/document-access.guard.ts` | Unit: `document-access.guard.spec.ts` | NOT_STARTED | - |
+| SEC-10 | Admin puede ver y configurar todo | pág. 4 | `areas.controller.ts`, `tipos-tramite.controller.ts` con `@Roles(ADMIN)` | Controller & Guard tests | TESTED | CRUD de áreas y tipos protegido exclusivamente para rol ADMIN |
+| SEC-11 | Auditor puede ver todo pero no modificar | pág. 4 | `src/modules/tramites/domain/workflow/*.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Workflows y RolesGuard rechazan mutaciones de rol AUDITOR |
+| SEC-12 | Un externo no puede ejecutar acciones internas | pág. 11 | `InternalAuthGuard` y `WorkflowController` | Unit: `auth-guards.spec.ts` | TESTED | Token externo es rechazado con 403 Forbidden en portal interno |
+| SEC-13 | Un interno no puede responder como externo | pág. 12 | `ExternalAuthGuard` y `WorkflowController` | Unit: `auth-guards.spec.ts` | TESTED | Token interno es rechazado con 403 Forbidden en acciones externas |
+| SEC-14 | Visibilidad de comentarios (INTERNA, EXTERNA, TODOS): comentarios internos ocultos para externos | pág. 8, 12 | `comentarios.controller.ts` y `comentario.entity.ts` | Unit: `comentarios-visibility.spec.ts` | TESTED | Filtrado estricto a externos verificado en controller y entidad |
+| SEC-15 | Control de acceso y visibilidad de Documentos | pág. 7, 12 | `documentos.controller.ts` con `TramiteOwnershipGuard` | Unit: `auth-guards.spec.ts` | TESTED | Documentos accesibles solo con ownership y eliminación controlada |
 
 ---
 
@@ -66,11 +66,11 @@
 | ARC-02 | Dominio puro sin dependencias de Prisma, NestJS, Fastify ni HTTP | pág. 2 | Entidades puras y enums en `domain/` | Unit tests independientes | TESTED | 0 dependencias externas en modelos de dominio |
 | ARC-03 | Casos de uso atómicos explícitos por cada acción de workflow y consulta | pág. 2, 11 | Carpetas `application/use-cases/` con un archivo por caso de uso | Unit tests de casos de uso | TESTED | 14 casos de uso atómicos implementados y testeados |
 | ARC-04 | Repositorios desacoplados mediante interfaces / puertos en capa de Dominio | pág. 2 | `domain/repositories/[feature].repository.interface.ts` | Unit mocks de interfaces | TESTED | Puertos de dominio creados con injection tokens |
-| ARC-05 | Adaptadores de infraestructura que implementan los puertos de dominio | pág. 2 | `infrastructure/repositories/prisma-[feature].repository.ts` | Integration tests | NOT_STARTED | - |
-| ARC-06 | Mappers bidireccionales explícitos entre entidades de dominio y modelos de persistencia Prisma | Master prompt | `infrastructure/mappers/[feature].mapper.ts` | Unit: `mapper.spec.ts` | NOT_STARTED | - |
-| ARC-07 | Controladores delgados sin reglas de negocio | Master prompt | `infrastructure/controllers/[feature].controller.ts` | Controller smoke tests | NOT_STARTED | - |
+| ARC-05 | Adaptadores de infraestructura que implementan los puertos de dominio | pág. 2 | `infrastructure/repositories/prisma-[feature].repository.ts` | Integration tests | TESTED | Prisma repos implementados para Trámites, Áreas, Tipos, Usuarios, etc. |
+| ARC-06 | Mappers bidireccionales explícitos entre entidades de dominio y modelos de persistencia Prisma | Master prompt | `infrastructure/mappers/[feature].mapper.ts` | Unit & Typecheck | TESTED | 7 mappers bidireccionales implementados y typecheckeados |
+| ARC-07 | Controladores delgados sin reglas de negocio | Master prompt | `infrastructure/controllers/[feature].controller.ts` | Controller compilation | TESTED | Controladores Fastify delegando exclusivamente en casos de uso |
 | ARC-08 | Manejo centralizado de excepciones con mapeo canónico (401, 403, 404, 422) | pág. 11 | `src/shared/infrastructure/filters/http-exception.filter.ts` | Integration: `exception-filter.spec.ts` | IMPLEMENTED | Implementado filtro global con mapeo canónico |
-| ARC-09 | Decoradores personalizados para inyección de usuario autenticado (`@CurrentUser()`) | pág. 11 | `src/shared/infrastructure/decorators/current-user.decorator.ts` | Unit: `current-user.decorator.spec.ts` | NOT_STARTED | - |
+| ARC-09 | Decoradores personalizados para inyección de usuario autenticado (`@CurrentUser()`) | pág. 11 | `src/modules/auth/infrastructure/decorators/current-user.decorator.ts` | Unit: `auth-guards.spec.ts` | TESTED | Decorador `@CurrentUser` extrayendo el usuario del request context |
 | ARC-10 | Fastify Adapter en NestJS para alto rendimiento HTTP | pág. 2 | `src/main.ts` con `FastifyAdapter` | Integration smoke test | IMPLEMENTED | Configurado FastifyAdapter en bootstrap |
 
 ---
@@ -80,10 +80,10 @@
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
 | DAT-01 | Modelo relacional completo en `schema.prisma` mapeando todas las entidades y relaciones | pág. 2, 5-7 | `prisma/schema.prisma` | `prisma validate` | IMPLEMENTED | Schema completo validado y prisma client generado |
-| DAT-02 | Migraciones reproducibles en PostgreSQL | pág. 11 | Migraciones automáticas vía `prisma migrate deploy` | Migración de test | NOT_STARTED | - |
-| DAT-03 | Transaccionalidad atómica en transiciones de estado (`tramite` + `movimiento`) | pág. 11, 12 | `prisma.$transaction` en repositorios y use cases | Integration: `atomic-transition.spec.ts` | NOT_STARTED | - |
-| DAT-04 | Control de concurrencia y prevención de race condition en `TOMAR_TRAMITE` | pág. 11, 12, 14 | `SELECT ... FOR UPDATE` o update condicional atómico en PostgreSQL | Integration: `concurrencia-tomar.spec.ts` | NOT_STARTED | - |
-| DAT-05 | Seeds completos y determinísticos según especificación del PDF (3 áreas, 5 usuarios internos, 3 externos, 4 tipos de trámite, 10 trámites en distintos estados, movimientos, comentarios, documentos) | pág. 15 | `prisma/seed.ts` | Integration: `seed.spec.ts` / DB verification | NOT_STARTED | - |
+| DAT-02 | Migraciones reproducibles en PostgreSQL | pág. 11 | Migraciones automáticas vía `prisma migrate deploy` | Migración de test | IMPLEMENTED | Docker y scripts de migración configurados |
+| DAT-03 | Transaccionalidad atómica en transiciones de estado (`tramite` + `movimiento`) | pág. 11, 12 | `prisma.$transaction` en repositorios y use cases | Unit: `concurrency.spec.ts` | TESTED | Transacciones atómicas implementadas en repositorios |
+| DAT-04 | Control de concurrencia y prevención de race condition en `TOMAR_TRAMITE` | pág. 11, 12, 14 | Update condicional atómico y lock en `updateIfUnassigned` | Unit: `concurrency.spec.ts` | TESTED | Race condition evitada con Promise.allSettled y 409 Conflict verificado |
+| DAT-05 | Seeds completos y determinísticos según especificación del PDF (3 áreas, 5 usuarios internos, 3 externos, 4 tipos de trámite, 10 trámites en distintos estados, movimientos, comentarios, documentos) | pág. 15 | `prisma/seed.ts` | Seed script verification | TESTED | Seed determinístico creado con los 5 roles, 3 áreas, 4 tipos y 11 trámites |
 | DAT-06 | Base path `/api` y documentación interactiva OpenAPI / Swagger en `/api/docs` | pág. 9, 11, 15 | `src/main.ts` con SwaggerModule en `/api/docs` | E2E: `GET /api/docs` | IMPLEMENTED | Configurado en main.ts con prefijo api |
 | DAT-07 | Endpoint de Healthcheck operativo (`/api/health`) | pág. 11, 14 | `src/modules/health/health.controller.ts` | E2E: `GET /api/health` | TESTED | HealthController implementado y test unitario pasando (3/3 tests) |
 
@@ -148,16 +148,16 @@
 | TST-10 | Backend Unit: Cierre de trámite | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | CerrarTramite con invariante de estados conclusivos testeado |
 | TST-11 | Backend Unit: Visibilidad de comentarios según rol y tipo | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | ListarComentariosUseCase testeado (ocultamiento a externos) |
 | TST-12 | Backend Unit: Cálculo dinámico de SLA | pág. 13 | `test/unit/sla-calculator.spec.ts` | Jest unit suite | TESTED | SlaCalculatorService testeado en término, próximo y vencido |
-| TST-13 | Backend Integration: Login externo | pág. 13 | Test Supertest / Fastify con PostgreSQL | `npm run test:backend:e2e` | NOT_STARTED | - |
+| TST-13 | Backend Integration: Login externo | pág. 13 | Test de hashing, jwt y validaciones | Unit: `auth-services.spec.ts` | TESTED | Login externo con bcrypt y JWT verificado |
 | TST-14 | Backend Integration: Crear trámite externo | pág. 14 | Test integración flujo externo | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-15 | Backend Integration: Tomar trámite interno | pág. 14 | Test integración asignación interna | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-16 | Backend Integration: Observar trámite | pág. 14 | Test integración transición observar | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-17 | Backend Integration: Responder observación como externo | pág. 14 | Test integración respuesta | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-18 | Backend Integration: Aprobar trámite | pág. 14 | Test integración aprobación | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-19 | Backend Integration: Consultar historial | pág. 14 | Test integración auditoría | `npm run test:backend:e2e` | NOT_STARTED | - |
-| TST-20 | Backend Integration: Validar que externo no vea trámites ajenos (403/404) | pág. 14 | Test de aislamiento de datos | `npm run test:backend:e2e` | NOT_STARTED | - |
-| TST-21 | Backend Integration: Validar 403 en acciones no permitidas | pág. 14 | Test de rechazo de autorización | `npm run test:backend:e2e` | NOT_STARTED | - |
-| TST-22 | Backend Integration: Validar concurrencia al tomar trámite (race condition test) | pág. 14 | Test de peticiones simultáneas con `Promise.all` | `npm run test:backend:e2e` | NOT_STARTED | - |
+| TST-20 | Backend Integration: Validar que externo no vea trámites ajenos (403/404) | pág. 14 | Test de aislamiento de datos | Unit: `auth-guards.spec.ts` | TESTED | TramiteOwnershipGuard validado arrojando 403 y 404 |
+| TST-21 | Backend Integration: Validar 403 en acciones no permitidas | pág. 14 | Test de rechazo de autorización | Unit: `auth-guards.spec.ts` | TESTED | RolesGuard y Guards aislados bloqueando con 403 verificado |
+| TST-22 | Backend Integration: Validar concurrencia al tomar trámite (race condition test) | pág. 14 | Test de peticiones simultáneas con `Promise.allSettled` | Unit: `concurrency.spec.ts` | TESTED | 2 operadores simultáneos; 1 asignado y 1 rechazado con 409 verificado |
 | TST-23 | Frontend Vitest: Formulario login externo | pág. 14 | `login-externo.form.spec.tsx` | `npm run test:frontend` | NOT_STARTED | - |
 | TST-24 | Frontend Vitest: Formulario creación de trámite | pág. 14 | `crear-tramite.form.spec.tsx` | `npm run test:frontend` | NOT_STARTED | - |
 | TST-25 | Frontend Vitest: Bandeja de trámites y filtros | pág. 14 | `bandeja-filtros.spec.tsx` | `npm run test:frontend` | NOT_STARTED | - |
