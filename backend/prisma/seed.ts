@@ -16,7 +16,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Iniciando seed determinístico para BPM Trámites de Oficina...');
 
-  // Limpieza de datos en cascada
   await prisma.comentarioTramite.deleteMany();
   await prisma.documentoTramite.deleteMany();
   await prisma.movimientoTramite.deleteMany();
@@ -28,7 +27,6 @@ async function main() {
 
   console.log('Tablas limpiadas exitosamente.');
 
-  // 1. Áreas Funcionales
   const areaMesa = await prisma.area.create({
     data: {
       id: '11111111-1111-1111-1111-111111111111',
@@ -58,10 +56,8 @@ async function main() {
 
   console.log('Áreas creadas: Mesa de Entradas, Compras, Legales.');
 
-  // Contraseña común para ambiente de pruebas: Password123!
   const passwordHash = await bcrypt.hash('Password123!', 10);
 
-  // 2. Usuarios Internos (5 Roles completos del sistema)
   const userAdmin = await prisma.usuarioInterno.create({
     data: {
       id: 'a1111111-1111-1111-1111-111111111111',
@@ -136,7 +132,6 @@ async function main() {
 
   console.log('Usuarios internos creados con los 5 roles del sistema.');
 
-  // 3. Usuarios Externos
   const userExtAcme = await prisma.usuarioExterno.create({
     data: {
       id: 'e1111111-1111-1111-1111-111111111111',
@@ -175,10 +170,9 @@ async function main() {
 
   console.log('Usuarios externos creados.');
 
-  // 4. Tipos de Trámite
   const tipoAltaProv = await prisma.tipoTramite.create({
     data: {
-      id: 't1111111-1111-1111-1111-111111111111',
+      id: 'b1111111-1111-1111-1111-111111111111',
       codigo: 'ALTA-PROV',
       nombre: 'Alta de Proveedor en Padrón',
       descripcion: 'Procedimiento para homologación e inscripción de proveedores oficiales',
@@ -192,7 +186,7 @@ async function main() {
 
   const tipoDictamen = await prisma.tipoTramite.create({
     data: {
-      id: 't2222222-2222-2222-2222-222222222222',
+      id: 'b2222222-2222-2222-2222-222222222222',
       codigo: 'DICT-JUR',
       nombre: 'Dictamen Jurídico y Normativo',
       descripcion: 'Consulta legal interna sobre pliegos, contratos o convenios institucionales',
@@ -206,7 +200,7 @@ async function main() {
 
   const tipoPagoFactura = await prisma.tipoTramite.create({
     data: {
-      id: 't3333333-3333-3333-3333-333333333333',
+      id: 'b3333333-3333-3333-3333-333333333333',
       codigo: 'SOL-PAGO',
       nombre: 'Solicitud de Pago y Facturación',
       descripcion: 'Trámite interno que requiere validación o subsanación de factura por parte del contratista externo',
@@ -220,7 +214,7 @@ async function main() {
 
   const tipoReclamo = await prisma.tipoTramite.create({
     data: {
-      id: 't4444444-4444-4444-4444-444444444444',
+      id: 'b4444444-4444-4444-4444-444444444444',
       codigo: 'REC-ADM',
       nombre: 'Reclamo Administrativo Ciudadano',
       descripcion: 'Presentación formal de reclamos ante la Mesa General de Entradas',
@@ -234,14 +228,11 @@ async function main() {
 
   console.log('Tipos de trámite configurados con SLA.');
 
-  // Fechas de referencia
   const ahora = new Date();
   const hace1Dia = new Date(ahora.getTime() - 24 * 3600 * 1000);
   const hace2Dias = new Date(ahora.getTime() - 48 * 3600 * 1000);
   const hace5Dias = new Date(ahora.getTime() - 120 * 3600 * 1000);
 
-  // 5. 11 Trámites con diversidad de estados, circuitos y SLA
-  // Trámite 1: BORRADOR (Circuito Externo-Interno)
   const t1 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000001',
@@ -260,7 +251,6 @@ async function main() {
     },
   });
 
-  // Trámite 2: INGRESADO (Circuito Externo-Interno, esperando ser tomado)
   const t2 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000002',
@@ -293,7 +283,6 @@ async function main() {
     },
   });
 
-  // Trámite 3: EN_REVISION (Tomado por Operador Compras)
   const t3 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000003',
@@ -327,7 +316,6 @@ async function main() {
     },
   });
 
-  // Trámite 4: OBSERVADO (Esperando subsanación del proveedor)
   const t4 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000004',
@@ -371,7 +359,6 @@ async function main() {
     },
   });
 
-  // Trámite 5: DERIVADO (Circuito Interno-Interno: de Compras a Asuntos Legales)
   const t5 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000005',
@@ -403,7 +390,6 @@ async function main() {
     },
   });
 
-  // Trámite 6: ESPERANDO_EXTERNO (Circuito Interno-Externo)
   const t6 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000006',
@@ -437,7 +423,6 @@ async function main() {
     },
   });
 
-  // Trámite 7: ESPERANDO_INTERNO (Circuito Interno-Externo, el externo ya respondió)
   const t7 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000007',
@@ -471,7 +456,6 @@ async function main() {
     },
   });
 
-  // Trámite 8: APROBADO
   const t8 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000008',
@@ -505,7 +489,6 @@ async function main() {
     },
   });
 
-  // Trámite 9: RECHAZADO
   const t9 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000009',
@@ -538,7 +521,6 @@ async function main() {
     },
   });
 
-  // Trámite 10: CERRADO (archivado)
   const t10 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000010',
@@ -573,7 +555,6 @@ async function main() {
     },
   });
 
-  // Trámite 11 (VENCIDO POR SLA - Alerta Crítica):
   const t11 = await prisma.tramite.create({
     data: {
       id: '00000000-0000-0000-0000-000000000011',
@@ -592,7 +573,6 @@ async function main() {
     },
   });
 
-  // 6. Documentos y Comentarios de Demostración
   await prisma.documentoTramite.create({
     data: {
       tramiteId: t3.id,

@@ -1,0 +1,33 @@
+# Dependency directories
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+**/dist
+.next
+**/.next
+out
+**/out
+.turbo
+**/.turbo
+
+# Git & Agent artifacts
+.git
+.gitignore
+.github
+.agents
+.gemini
+.vscode
+.idea
+
+# Environment & Local files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Documentation
+docs
+*.md
