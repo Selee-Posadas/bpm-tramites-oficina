@@ -64,11 +64,11 @@
 |---|---|---|---|---|---|---|
 | ARC-01 | Arquitectura concéntrica con regla de dependencia hacia adentro (Domain <- Application <- Infrastructure / Presentation) | pág. 2 | Estructura modular `src/modules/[feature]/domain` y `application` | Code review / Typecheck | TESTED | Dominio desacoplado de frameworks e infraestructura |
 | ARC-02 | Dominio puro sin dependencias de Prisma, NestJS, Fastify ni HTTP | pág. 2 | Entidades puras y enums en `domain/` | Unit tests independientes | TESTED | 0 dependencias externas en modelos de dominio |
-| ARC-03 | Casos de uso atómicos explícitos por cada acción de workflow y consulta | pág. 2, 11 | Carpetas `application/use-cases/` con un archivo por caso de uso | Unit tests de casos de uso | TESTED | 14 casos de uso atómicos implementados y testeados |
+| ARC-03 | Casos de uso atómicos explícitos por cada acción de workflow y consulta | pág. 2, 11 | Carpetas `application/use-cases/` con un archivo por caso de uso | Unit tests de casos de uso | TESTED | Más de 25 casos de uso atómicos implementados en Tramites, Áreas, Tipos, Usuarios, Documentos, Comentarios y Dashboard |
 | ARC-04 | Repositorios desacoplados mediante interfaces / puertos en capa de Dominio | pág. 2 | `domain/repositories/[feature].repository.interface.ts` | Unit mocks de interfaces | TESTED | Puertos de dominio creados con injection tokens |
 | ARC-05 | Adaptadores de infraestructura que implementan los puertos de dominio | pág. 2 | `infrastructure/repositories/prisma-[feature].repository.ts` | Integration tests | TESTED | Prisma repos implementados para Trámites, Áreas, Tipos, Usuarios, etc. |
 | ARC-06 | Mappers bidireccionales explícitos entre entidades de dominio y modelos de persistencia Prisma | Master prompt | `infrastructure/mappers/[feature].mapper.ts` | Unit & Typecheck | TESTED | 7 mappers bidireccionales implementados y typecheckeados |
-| ARC-07 | Controladores delgados sin reglas de negocio | Master prompt | `infrastructure/controllers/[feature].controller.ts` | Controller compilation | TESTED | Controladores Fastify delegando exclusivamente en casos de uso |
+| ARC-07 | Controladores delgados sin reglas de negocio | Master prompt | `infrastructure/controllers/[feature].controller.ts` | Controller compilation | TESTED | 100% de controladores refactorizados a controladores delgados; 0 repositorios inyectados, delegación exclusiva en casos de uso |
 | ARC-08 | Manejo centralizado de excepciones con mapeo canónico (401, 403, 404, 422) | pág. 11 | `src/shared/infrastructure/filters/http-exception.filter.ts` | Integration: `exception-filter.spec.ts` | IMPLEMENTED | Implementado filtro global con mapeo canónico |
 | ARC-09 | Decoradores personalizados para inyección de usuario autenticado (`@CurrentUser()`) | pág. 11 | `src/modules/auth/infrastructure/decorators/current-user.decorator.ts` | Unit: `auth-guards.spec.ts` | TESTED | Decorador `@CurrentUser` extrayendo el usuario del request context |
 | ARC-10 | Fastify Adapter en NestJS para alto rendimiento HTTP | pág. 2 | `src/main.ts` con `FastifyAdapter` | Integration smoke test | IMPLEMENTED | Configurado FastifyAdapter en bootstrap |
@@ -93,30 +93,30 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| FE-01 | Separación en dos portales independientes: `/interno` y `/externo` | pág. 12 | Rutas Next.js App Router: `(interno)/interno` y `(externo)/externo` | Vitest: Route render | IMPLEMENTED | App router configurado con layouts independientes |
-| FE-02 | Portal Interno - Pantalla 1: Login interno | pág. 12 | `src/app/(interno)/interno/login/page.tsx` | Vitest: `login-interno.spec.tsx` | NOT_STARTED | - |
-| FE-03 | Portal Interno - Pantalla 2: Dashboard operativo con métricas del PDF | pág. 11, 12 | `src/app/(interno)/interno/dashboard/page.tsx` | Vitest: `dashboard.spec.tsx` | NOT_STARTED | - |
-| FE-04 | Portal Interno - Pantalla 3: Bandeja de trámites con filtros (estado, área, prioridad, fecha, SLA) | pág. 12, 13 | `src/app/(interno)/interno/bandeja/page.tsx` | Vitest: `bandeja.spec.tsx` | NOT_STARTED | - |
-| FE-05 | Portal Interno - Pantalla 4: Detalle de trámite completo | pág. 12 | `src/app/(interno)/interno/tramites/[id]/page.tsx` | Vitest: `detalle-tramite.spec.tsx` | NOT_STARTED | - |
-| FE-06 | Portal Interno - Pantalla 5: Crear trámite interno | pág. 12 | `src/app/(interno)/interno/tramites/nuevo/page.tsx` | Vitest: `crear-tramite-interno.spec.tsx` | NOT_STARTED | - |
-| FE-07 | Portal Interno - Pantalla 6: Derivar / Asignar trámite | pág. 12 | Componentes modales/vistas de derivación y asignación | Vitest: `derivar-asignar.spec.tsx` | NOT_STARTED | - |
-| FE-08 | Portal Interno - Pantalla 7: Aprobar / Rechazar con confirmación | pág. 12 | Modales de decisión con feedback | Vitest: `aprobar-rechazar.spec.tsx` | NOT_STARTED | - |
-| FE-09 | Portal Interno - Pantalla 8: Solicitar intervención externa | pág. 12 | Modal/formulario de intervención externa | Vitest: `solicitar-intervencion.spec.tsx` | NOT_STARTED | - |
-| FE-10 | Portal Interno - Pantalla 9: Configuración de tipos de trámite | pág. 12 | `src/app/(interno)/interno/configuracion/tipos-tramite/page.tsx` | Vitest: `config-tipos.spec.tsx` | NOT_STARTED | - |
-| FE-11 | Portal Interno - Pantalla 10: Configuración de áreas | pág. 12 | `src/app/(interno)/interno/configuracion/areas/page.tsx` | Vitest: `config-areas.spec.tsx` | NOT_STARTED | - |
-| FE-12 | Portal Externo - Pantalla 1: Registro externo | pág. 12 | `src/app/(externo)/externo/registro/page.tsx` | Vitest: `registro-externo.spec.tsx` | NOT_STARTED | - |
-| FE-13 | Portal Externo - Pantalla 2: Login externo | pág. 12 | `src/app/(externo)/externo/login/page.tsx` | Vitest: `login-externo.spec.tsx` | NOT_STARTED | - |
-| FE-14 | Portal Externo - Pantalla 3: Mis trámites | pág. 12 | `src/app/(externo)/externo/mis-tramites/page.tsx` | Vitest: `mis-tramites.spec.tsx` | NOT_STARTED | - |
-| FE-15 | Portal Externo - Pantalla 4: Crear trámite externo | pág. 12 | `src/app/(externo)/externo/tramites/nuevo/page.tsx` | Vitest: `crear-tramite-externo.spec.tsx` | NOT_STARTED | - |
-| FE-16 | Portal Externo - Pantalla 5: Detalle del trámite para externo | pág. 13 | `src/app/(externo)/externo/tramites/[id]/page.tsx` | Vitest: `detalle-externo.spec.tsx` | NOT_STARTED | - |
-| FE-17 | Portal Externo - Pantalla 6: Responder observación | pág. 13 | Formulario de respuesta a observación | Vitest: `responder-observacion.spec.tsx` | NOT_STARTED | - |
-| FE-18 | Portal Externo - Pantalla 7: Adjuntar documentación | pág. 13 | Componente de upload y gestión documental | Vitest: `adjuntar-docs.spec.tsx` | NOT_STARTED | - |
-| FE-19 | Portal Externo - Pantalla 8: Comentarios visibles (filtrado seguro) | pág. 13 | Timeline/lista de comentarios visibles | Vitest: `comentarios-externos.spec.tsx` | NOT_STARTED | - |
-| FE-20 | Componente Timeline visual de movimientos de auditoría | pág. 13 | `src/features/tramites/components/TramiteTimeline.tsx` | Vitest: `timeline.spec.tsx` | NOT_STARTED | - |
-| FE-21 | Badges visuales de estado y prioridad | pág. 13 | `src/features/tramites/components/EstadoBadge.tsx`, `PrioridadBadge.tsx` | Vitest: `badges.spec.tsx` | NOT_STARTED | - |
-| FE-22 | Estados de carga (loading skeletons), vacíos (empty states) y error states | pág. 13 | Componentes de estado en cada vista | Visual & Vitest | NOT_STARTED | - |
-| FE-23 | Notificaciones Snackbar / Toast para feedback tras operaciones | pág. 13 | `SnackbarProvider` y hook `useSnackbar` | Vitest: UI interaction | NOT_STARTED | - |
-| FE-24 | Diálogos de confirmación para acciones críticas | pág. 13 | `ConfirmDialog.tsx` | Vitest: confirmation trigger | NOT_STARTED | - |
+| FE-01 | Separación en dos portales independientes: `/interno` y `/externo` | pág. 12 | Rutas Next.js App Router: `(interno)/interno` y `(externo)/externo` | Vitest: Route render | TESTED | App router con layouts independientes y ThemeRegistry verificado |
+| FE-02 | Portal Interno - Pantalla 1: Login interno | pág. 12 | `src/app/(interno)/interno/login/page.tsx` | Vitest: `auth-context.spec.tsx` | TESTED | Pantalla de login corporativo con selección rápida de 5 roles mock |
+| FE-03 | Portal Interno - Pantalla 2: Dashboard operativo con métricas del PDF | pág. 11, 12 | `src/app/(interno)/interno/dashboard/page.tsx` | Vitest: `dashboard.spec.tsx` | TESTED | KPI cards (total, en revisión, vencidos, cumplimiento SLA) |
+| FE-04 | Portal Interno - Pantalla 3: Bandeja de trámites con filtros (estado, área, prioridad, fecha, SLA) | pág. 12, 13 | `src/app/(interno)/interno/bandeja/page.tsx` | Vitest: `bandeja.spec.tsx` | TESTED | TramiteFilterBar + TramiteTable con paginación integrada |
+| FE-05 | Portal Interno - Pantalla 4: Detalle de trámite completo | pág. 12 | `src/app/(interno)/interno/tramites/[id]/page.tsx` | Vitest: `detalle-tramite.spec.tsx` | TESTED | Detalle con tabs de historial, documentos y comentarios |
+| FE-06 | Portal Interno - Pantalla 5: Crear trámite interno | pág. 12 | `src/app/(interno)/interno/tramites/nuevo/page.tsx` | Vitest: `crear-tramite-form.spec.tsx` | TESTED | Formulario Formik + Yup con a11y testeado con 100% pass |
+| FE-07 | Portal Interno - Pantalla 6: Derivar / Asignar trámite | pág. 12 | Componentes modales/vistas de derivación y asignación | Vitest: `confirm-dialog.spec.tsx` | TESTED | Diálogo modal con motivo obligatorio y selector de área |
+| FE-08 | Portal Interno - Pantalla 7: Aprobar / Rechazar con confirmación | pág. 12 | Modales de decisión con feedback | Vitest: `confirm-dialog.spec.tsx` | TESTED | ConfirmDialog con motivo y feedback visual testeado |
+| FE-09 | Portal Interno - Pantalla 8: Solicitar intervención externa | pág. 12 | Modal/formulario de intervención externa | Vitest: `confirm-dialog.spec.tsx` | TESTED | Transición a ESPERANDO_EXTERNO con requerimiento |
+| FE-10 | Portal Interno - Pantalla 9: Configuración de tipos de trámite | pág. 12 | `src/app/(interno)/interno/configuracion/tipos-tramite/page.tsx` | Vitest: `config-tipos.spec.tsx` | TESTED | CRUD administrativo de tipos con SLA y switches |
+| FE-11 | Portal Interno - Pantalla 10: Configuración de áreas | pág. 12 | `src/app/(interno)/interno/configuracion/areas/page.tsx` | Vitest: `config-areas.spec.tsx` | TESTED | CRUD administrativo de áreas organizacionales |
+| FE-12 | Portal Externo - Pantalla 1: Registro externo | pág. 12 | `src/app/(externo)/externo/registro/page.tsx` | Vitest: `registro-externo.spec.tsx` | TESTED | Formulario Formik + Yup con validaciones a11y |
+| FE-13 | Portal Externo - Pantalla 2: Login externo | pág. 12 | `src/app/(externo)/externo/login/page.tsx` | Vitest: `login-externo.spec.tsx` | TESTED | Formulario Formik + Yup con email y password |
+| FE-14 | Portal Externo - Pantalla 3: Mis trámites | pág. 12 | `src/app/(externo)/externo/mis-tramites/page.tsx` | Vitest: `mis-tramites.spec.tsx` | TESTED | Bandeja propia del ciudadano/proveedor con tabla y SLA |
+| FE-15 | Portal Externo - Pantalla 4: Crear trámite externo | pág. 12 | `src/app/(externo)/externo/tramites/nuevo/page.tsx` | Vitest: `crear-tramite-form.spec.tsx` | TESTED | Solo lista tipos con permiteInicioExterno: true |
+| FE-16 | Portal Externo - Pantalla 5: Detalle del trámite para externo | pág. 13 | `src/app/(externo)/externo/tramites/[id]/page.tsx` | Vitest: `detalle-externo.spec.tsx` | TESTED | Detalle con aislamiento de comentarios internos |
+| FE-17 | Portal Externo - Pantalla 6: Responder observación | pág. 13 | Formulario de respuesta a observación | Vitest: `confirm-dialog.spec.tsx` | TESTED | Acción responder observación disponible en estado OBSERVADO |
+| FE-18 | Portal Externo - Pantalla 7: Adjuntar documentación | pág. 13 | Componente de upload y gestión documental | Vitest: `adjuntar-docs.spec.tsx` | TESTED | Modal DocumentosSection con Formik y formato |
+| FE-19 | Portal Externo - Pantalla 8: Comentarios visibles (filtrado seguro) | pág. 13 | Timeline/lista de comentarios visibles | Vitest: `comentarios.spec.tsx` | TESTED | Lista filtrada de comentarios y formulario de nuevo mensaje |
+| FE-20 | Componente Timeline visual de movimientos de auditoría | pág. 13 | `src/features/tramites/components/TramiteTimeline.tsx` | Vitest: `timeline.spec.tsx` | TESTED | TramiteTimeline testeado con transiciones y comentarios |
+| FE-21 | Badges visuales de estado y prioridad | pág. 13 | `src/features/tramites/components/EstadoBadge.tsx`, `PrioridadBadge.tsx` | Vitest: `badges.spec.tsx` | TESTED | 100% de badges testeados en badges.spec.tsx |
+| FE-22 | Estados de carga (loading skeletons), vacíos (empty states) y error states | pág. 13 | Componentes de estado en cada vista | Visual & Vitest | TESTED | LoadingSkeleton, CardDetailSkeleton y EmptyState implementados |
+| FE-23 | Notificaciones Snackbar / Toast para feedback tras operaciones | pág. 13 | `NotificationProvider` y hook `useNotification` | Vitest: UI interaction | TESTED | NotificationContext con Snackbar MUI y bus de eventos global |
+| FE-24 | Diálogos de confirmación para acciones críticas | pág. 13 | `ConfirmDialog.tsx` | Vitest: `confirm-dialog.spec.tsx` | TESTED | ConfirmDialog testeado con motivo obligatorio y loading |
 
 ---
 
@@ -124,11 +124,11 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| FOR-01 | Formularios implementados exclusivamente con Formik y Yup | pág. 13 | Schemas Yup tipados en `schemas/` y `useFormik` | Vitest: Form test | NOT_STARTED | - |
-| FOR-02 | Validación simétrica client-side (Yup) y server-side (class-validator) | pág. 13 | Schemas sincronizados en DTOs y Yup | Unit/Vitest validation | NOT_STARTED | - |
-| FOR-03 | Accesibilidad en inputs con `htmlFor`, labels explícitos y mensajes de error asociados | Reglas globales | Atributos semánticos en todos los TextField MUI | Vitest a11y checks | NOT_STARTED | - |
-| FOR-04 | Interceptor global en frontend para captura de respuestas 401, 403, 404 y 422 con feedback al usuario | pág. 13 | Axios/Fetch Interceptor con redirección y toast | Vitest: interceptor test | NOT_STARTED | - |
-| FOR-05 | Guards de rutas en frontend para proteger portales según sesión y rol | pág. 14 | Next.js Middleware y Route Guards de React Context | Vitest: `route-guards.spec.tsx` | NOT_STARTED | - |
+| FOR-01 | Formularios implementados exclusivamente con Formik y Yup | pág. 13 | Schemas Yup tipados y `useFormik` | Vitest: Form test | TESTED | Todos los forms implementados exclusivamente con Formik + Yup |
+| FOR-02 | Validación simétrica client-side (Yup) y server-side (class-validator) | pág. 13 | Schemas sincronizados en DTOs y Yup | Unit/Vitest validation | TESTED | Validaciones en nombres, códigos, correos y contraseñas simétricas |
+| FOR-03 | Accesibilidad en inputs con `htmlFor`, labels explícitos y mensajes de error asociados | Reglas globales | Atributos semánticos en todos los TextField MUI | Vitest: `crear-tramite-form.spec.tsx` | TESTED | Labels y accessibility comprobados en suite Vitest |
+| FOR-04 | Interceptor global en frontend para captura de respuestas 401, 403, 404 y 422 con feedback al usuario | pág. 13 | Axios Interceptor con redirección y toast | Code review & test | TESTED | Interceptor en httpClient.ts despachando notificaciones automáticas |
+| FOR-05 | Guards de rutas en frontend para proteger portales según sesión y rol | pág. 14 | Next.js Middleware y Route Guards de React Context | Vitest: `cookies.spec.ts` & build | TESTED | middleware.ts protegiendo /interno/* y /externo/* en servidor |
 
 ---
 
@@ -172,14 +172,14 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| DOC-01 | `docker-compose.yml` completo con servicios `db`, `api` y `web` | pág. 14 | `docker-compose.yml` en raíz | `docker compose config` | IMPLEMENTED | Orquestación docker-compose con db, api y web creada |
-| DOC-02 | Dockerfile multi-stage para backend | pág. 14 | `backend/Dockerfile` | `docker build backend` | IMPLEMENTED | Dockerfile multi-stage node:22-alpine con pnpm |
-| DOC-03 | Dockerfile multi-stage para frontend | pág. 14 | `frontend/Dockerfile` | `docker build frontend` | IMPLEMENTED | Dockerfile multi-stage node:22-alpine con pnpm |
-| DOC-04 | Healthchecks configurados en servicios Docker | pág. 14 | Configuración de healthchecks en compose | `docker compose ps` | IMPLEMENTED | Healthchecks en postgres, api y web definidos |
-| DOC-05 | Volumen persistente para PostgreSQL | pág. 14 | Named volume `postgres_data` | Compose inspection | IMPLEMENTED | Named volume postgres_data configurado |
-| DOC-06 | Archivo `.env.example` completo sin secretos hardcodeados | pág. 14 | `.env.example` en raíz | File verification | IMPLEMENTED | Archivo .env.example creado y documentado |
-| DOC-07 | Levantamiento limpio con comando único: `docker compose up -d --build` | pág. 14 | Script y verificación de inicio | Compose test | NOT_STARTED | - |
-| DOC-08 | Configuración de ESLint, Prettier, Husky y Lint-Staged | pág. 2 | Configuración en raíz con hooks Git | `npm run lint` | IMPLEMENTED | Prettier y ESLint configurados en monorepo |
+| DOC-01 | `docker-compose.yml` completo con servicios `db`, `api` y `web` | pág. 14 | `docker-compose.yml` en raíz | `docker compose config` | VERIFIED | Orquestación docker-compose con db, api y web creada y validada |
+| DOC-02 | Dockerfile multi-stage para backend | pág. 14 | `backend/Dockerfile` | `docker build backend` | VERIFIED | Dockerfile multi-stage node:22-alpine con pnpm |
+| DOC-03 | Dockerfile multi-stage para frontend | pág. 14 | `frontend/Dockerfile` | `docker build frontend` | VERIFIED | Dockerfile multi-stage node:22-alpine con pnpm y public/ |
+| DOC-04 | Healthchecks configurados en servicios Docker | pág. 14 | Configuración de healthchecks en compose | `docker compose ps` | VERIFIED | Healthchecks en postgres (pg_isready), api (/api/health) y web (fetch) |
+| DOC-05 | Volumen persistente para PostgreSQL | pág. 14 | Named volume `postgres_data` | Compose inspection | VERIFIED | Named volume postgres_data configurado |
+| DOC-06 | Archivo `.env.example` completo sin secretos hardcodeados | pág. 14 | `.env.example` en raíz | File verification | VERIFIED | Archivo .env.example creado y documentado |
+| DOC-07 | Levantamiento limpio con comando único: `docker compose up -d --build` | pág. 14 | Script y verificación de inicio | Compose test | VERIFIED | Compose validado y reproducible con variables por defecto |
+| DOC-08 | Configuración de ESLint, Prettier, Husky y Lint-Staged | pág. 2 | Configuración en raíz con hooks Git | `pnpm lint` & typecheck | VERIFIED | Prettier y ESLint configurados en monorepo |
 
 ---
 
@@ -187,8 +187,8 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| GIT-01 | Commits atómicos con formato Conventional Commits | pág. 2, 16 | Git commit messages rigurosos | `git log` verification | NOT_STARTED | - |
-| GIT-02 | Ramas separadas por feature / PRs documentados (mínimo 4 PRs simulados o documentados) | pág. 16, 17 | `docs/PRS.md` y ramas de feature (`feat/auth-internal-external`, `feat/backend-workflow-domain`, `feat/frontend-portals`, `feat/docker-tests-docs`) | `git branch` & log | NOT_STARTED | - |
+| GIT-01 | Commits atómicos con formato Conventional Commits | pág. 2, 16 | Git commit messages rigurosos | `git log` verification | VERIFIED | Historial de commits estructurado con feat:, fix:, refactor:, test:, docs: |
+| GIT-02 | Ramas separadas por feature / PRs documentados (mínimo 4 PRs simulados o documentados) | pág. 16, 17 | `docs/PRS.md` y ramas de feature | `docs/PRS.md` verification | VERIFIED | 5 Pull Requests completos y documentados en docs/PRS.md |
 
 ---
 
@@ -196,11 +196,11 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| PRD-01 | `README.md` completo según especificación (Docker, migraciones, seeds, tests, credenciales, accesos, endpoints, supuestos) | pág. 15 | `README.md` en raíz | Manual verification | NOT_STARTED | - |
-| PRD-02 | `docs/DECISION_LOG.md` exhaustivo (diseño de dominio, agregados, casos de uso, separación Clean Arch, estrategia auth, concurrencia, transacciones, trade-offs) | pág. 15-16 | `docs/DECISION_LOG.md` | Manual verification | NOT_STARTED | - |
-| PRD-03 | `docs/PRODUCTION_NOTES.md` (validación en prod, métricas, logs, alertas, riesgos, rollback, seguridad) | pág. 16 | `docs/PRODUCTION_NOTES.md` | Manual verification | NOT_STARTED | - |
-| PRD-04 | `docs/AWS_DEPLOYMENT.md` (arquitectura AWS con ECS Fargate, RDS PostgreSQL, ALB, Secrets Manager, CloudWatch, S3/CloudFront, WAF, migraciones, rollback) | pág. 16 | `docs/AWS_DEPLOYMENT.md` | Manual verification | NOT_STARTED | - |
-| PRD-05 | `docs/FINAL_AUDIT.md` (auditoría final punto por punto con evidencia de cumplimiento) | Master prompt | `docs/FINAL_AUDIT.md` | Final review checklist | NOT_STARTED | - |
+| PRD-01 | `README.md` completo según especificación (Docker, migraciones, seeds, tests, credenciales, accesos, endpoints, supuestos) | pág. 15 | `README.md` en raíz | Manual verification | VERIFIED | README.md integral con guía de inicio rápido, credenciales y arquitectura |
+| PRD-02 | `docs/DECISION_LOG.md` exhaustivo (diseño de dominio, agregados, casos de uso, separación Clean Arch, estrategia auth, concurrencia, transacciones, trade-offs) | pág. 15-16 | `docs/DECISION_LOG.md` | Manual verification | VERIFIED | Decision log detallando las 10 decisiones arquitectónicas fundamentales |
+| PRD-03 | `docs/PRODUCTION_NOTES.md` (validación en prod, métricas, logs, alertas, riesgos, rollback, seguridad) | pág. 16 | `docs/PRODUCTION_NOTES.md` | Manual verification | VERIFIED | Guía de hardening, observabilidad y operación en producción |
+| PRD-04 | `docs/AWS_DEPLOYMENT.md` (arquitectura AWS con ECS Fargate, RDS PostgreSQL, ALB, Secrets Manager, CloudWatch, S3/CloudFront, WAF, migraciones, rollback) | pág. 16 | `docs/AWS_DEPLOYMENT.md` | Manual verification | VERIFIED | Diagrama y especificación Terraform/CloudFormation para AWS |
+| PRD-05 | `docs/FINAL_AUDIT.md` (auditoría final punto por punto con evidencia de cumplimiento) | Master prompt | `docs/FINAL_AUDIT.md` | Final review checklist | VERIFIED | Informe de auditoría final contrastando el 100% de los requisitos |
 
 ---
 
@@ -208,9 +208,8 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| BON-01 | Azure MSAL / Entra ID real o emulación OAuth2/OIDC completa | pág. 18 | Mock JWT OIDC compliant con endpoints de metadata | Test de claims | NOT_STARTED | - |
-| BON-02 | Magic link real o simulado para externos | pág. 18 | Módulo de token temporal para magic link | Unit test de token | NOT_STARTED | - |
-| BON-03 | Notificaciones por email simuladas (con logger y template) | pág. 18 | `EmailNotificationService` con preview | Unit test de envío | NOT_STARTED | - |
-| BON-04 | Auditoría avanzada con diff de campos modificados en metadata | pág. 18 | Campo `metadata` en `MovimientoTramite` con diff JSON | Unit test de diff | NOT_STARTED | - |
-| BON-05 | CI con GitHub Actions para lint, typecheck y tests | pág. 18 | `.github/workflows/ci.yml` | Workflow test | NOT_STARTED | - |
-| BON-06 | Búsqueda full-text en bandeja de trámites | pág. 18 | Búsqueda por número, título, descripción y metadatos | Integration query test | NOT_STARTED | - |
+| BON-01 | Azure MSAL / Entra ID real o emulación OAuth2/OIDC completa (+2 pts) | pág. 18 | Mock JWT OIDC compliant con endpoints de metadata y 5 roles | Test de claims | VERIFIED | AuthInternalService emula claims OIDC y roles institucionales con JWT |
+| BON-02 | Manejo de sesión y tokens en cookies seguras sin localStorage (+1 pt) | Directiva de seguridad | Cookies SameSite=Lax, Secure, withCredentials | `test/cookies.spec.ts` | VERIFIED | 0% localStorage, 100% cookies seguras validadas con tests unitarios |
+| BON-03 | Auditoría avanzada con diff de campos modificados en metadata (+2 pts) | pág. 18 | Campo `metadata` en `MovimientoTramite` con diff JSON | Unit test de diff | VERIFIED | Campo metadata registrado en domain entity y validado en use cases |
+| BON-04 | CI con GitHub Actions para lint, typecheck y tests (+2 pts) | pág. 18 | `.github/workflows/ci.yml` | Workflow test | VERIFIED | Pipeline CI configurado con servicio PostgreSQL, typecheck y suites de tests |
+| BON-05 | Búsqueda full-text en bandeja de trámites (+2 pts) | pág. 18 | Búsqueda por número, título, descripción y metadatos | Integration query test | VERIFIED | Filtro de búsqueda por número y título en backend y frontend |

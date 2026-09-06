@@ -53,10 +53,10 @@ Para ejecutar migraciones o poblar los datos de prueba:
 
 ```bash
 # Ejecutar migraciones de Prisma
-npm run prisma:migrate
+pnpm prisma:migrate
 
 # Ejecutar seed determinístico
-npm run prisma:seed
+pnpm prisma:seed
 ```
 
 ---
@@ -87,16 +87,16 @@ Los datos de seed incluyen los perfiles requeridos para evaluar todos los flujos
 
 ```bash
 # Tests Unitarios de Backend (Jest - Dominio, Reglas de Workflow, SLA, Permisos)
-npm run test:backend
+pnpm test:backend
 
 # Tests de Integración de Backend (Jest - Auth, Flujos completos, Concurrencia al tomar trámite)
-npm run test:backend:e2e
+pnpm test:backend:e2e
 
 # Tests de Frontend (Vitest - Formularios Formik/Yup, Bandeja, Timeline, Guards)
-npm run test:frontend
+pnpm test:frontend
 
-# Ejecución de todos los tests
-npm run test
+# Ejecución de todos los tests del monorepo
+pnpm test
 ```
 
 ---
