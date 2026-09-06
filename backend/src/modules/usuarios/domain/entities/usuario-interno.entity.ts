@@ -1,16 +1,5 @@
 import { RolInterno } from '../enums/rol-interno.enum';
-
-export interface UsuarioInternoProps {
-  id: string;
-  nombre: string;
-  email: string;
-  areaId: string;
-  rol: RolInterno;
-  azureObjectId?: string | null;
-  activo: boolean;
-  fechaCreacion?: Date;
-  fechaActualizacion?: Date;
-}
+import { UsuarioInternoProps } from './usuario-interno.interface';
 
 export class UsuarioInterno {
   private props: UsuarioInternoProps;

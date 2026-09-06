@@ -1,15 +1,6 @@
 import { TipoUsuario } from '../enums/tipo-usuario.enum';
 import { VisibilidadComentario } from '../enums/visibilidad-comentario.enum';
-
-export interface ComentarioTramiteProps {
-  id: string;
-  tramiteId: string;
-  mensaje: string;
-  visibilidad: VisibilidadComentario;
-  autorTipo: TipoUsuario;
-  autorId: string;
-  fecha?: Date;
-}
+import { ComentarioTramiteProps } from './comentario-tramite.interface';
 
 export class ComentarioTramite {
   private props: ComentarioTramiteProps;

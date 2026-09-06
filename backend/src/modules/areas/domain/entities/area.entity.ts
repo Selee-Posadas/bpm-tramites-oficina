@@ -1,10 +1,4 @@
-export interface AreaProps {
-  id: string;
-  nombre: string;
-  codigo: string;
-  activa: boolean;
-  fechaCreacion?: Date;
-}
+import { AreaProps } from './area.interface';
 
 export class Area {
   private props: AreaProps;

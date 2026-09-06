@@ -9,28 +9,7 @@ import { ComentarioTramite } from './comentario-tramite.entity';
 import { WorkflowFactory } from '../workflow/workflow.factory';
 import { WorkflowContext } from '../workflow/workflow.interface';
 import { BusinessRuleValidationException } from '../../../../shared/domain/exceptions/domain.exception';
-
-export interface TramiteProps {
-  id: string;
-  numero: string;
-  tipoTramiteId: string;
-  titulo: string;
-  descripcion: string;
-  origen: OrigenTramite;
-  estado: EstadoTramite;
-  prioridad: PrioridadTramite;
-  areaActualId?: string | null;
-  usuarioAsignadoId?: string | null;
-  usuarioExternoId?: string | null;
-  creadoPorTipo: TipoUsuario;
-  creadoPorId: string;
-  fechaCreacion?: Date;
-  fechaActualizacion?: Date;
-  fechaCierre?: Date | null;
-  movimientos?: MovimientoTramite[];
-  documentos?: DocumentoTramite[];
-  comentarios?: ComentarioTramite[];
-}
+import { TramiteProps } from './tramite.interface';
 
 export class Tramite {
   private props: TramiteProps;

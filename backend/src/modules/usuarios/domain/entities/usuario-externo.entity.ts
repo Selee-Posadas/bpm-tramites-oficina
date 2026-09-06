@@ -1,15 +1,5 @@
 import { EstadoUsuarioExterno } from '../enums/estado-usuario-externo.enum';
-
-export interface UsuarioExternoProps {
-  id: string;
-  nombre: string;
-  email: string;
-  documento: string;
-  organizacion: string;
-  estado: EstadoUsuarioExterno;
-  fechaAlta?: Date;
-  fechaActualizacion?: Date;
-}
+import { UsuarioExternoProps } from './usuario-externo.interface';
 
 export class UsuarioExterno {
   private props: UsuarioExternoProps;
