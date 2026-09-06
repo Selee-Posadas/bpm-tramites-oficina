@@ -1,0 +1,3 @@
+# Assets públicos estáticos
+User-agent: *
+Allow: /
