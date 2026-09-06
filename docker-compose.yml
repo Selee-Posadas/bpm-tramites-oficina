@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: bpm_db
+    container_name: bpm_tramites_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -17,13 +17,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - bpm_network
+      - bpm_tramites_network
 
   api:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: bpm_api
+    container_name: bpm_tramites_api
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -44,13 +44,13 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - bpm_network
+      - bpm_tramites_network
 
   web:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: bpm_web
+    container_name: bpm_tramites_web
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -68,13 +68,13 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - bpm_network
+      - bpm_tramites_network
 
 volumes:
   postgres_data:
-    name: bpm_postgres_data
+    name: bpm_tramites_postgres_data
 
 networks:
-  bpm_network:
-    name: bpm_network
+  bpm_tramites_network:
+    name: bpm_tramites_network
     driver: bridge

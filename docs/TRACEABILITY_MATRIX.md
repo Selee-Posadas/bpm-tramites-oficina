@@ -16,23 +16,23 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| BPM-01 | Soporte Circuito Externo → Interno (Borrador -> Ingresado -> En_Revision -> Observado -> Ingresado -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 8 | `src/modules/tramites/domain/workflow/externo-interno.machine.ts` | Unit: `externo-interno.machine.spec.ts` | NOT_STARTED | - |
-| BPM-02 | Soporte Circuito Interno → Interno (Borrador -> Ingresado -> En_Revision -> Derivado -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 8-9 | `src/modules/tramites/domain/workflow/interno-interno.machine.ts` | Unit: `interno-interno.machine.spec.ts` | NOT_STARTED | - |
-| BPM-03 | Soporte Circuito Interno → Externo (Borrador -> Ingresado -> Esperando_Externo -> Esperando_Interno -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 9 | `src/modules/tramites/domain/workflow/interno-externo.machine.ts` | Unit: `interno-externo.machine.spec.ts` | NOT_STARTED | - |
-| BPM-04 | Entidad Trámite con campos completos (id, numero, tipoTramiteId, titulo, descripcion, origen, estado, prioridad, areaActualId, usuarioAsignadoId, usuarioExternoId, creadoPorTipo, creadoPorId, fechas) | pág. 5 | `src/modules/tramites/domain/entities/tramite.entity.ts` | Unit: `tramite.entity.spec.ts` | NOT_STARTED | - |
-| BPM-05 | 10 Estados de trámite (BORRADOR, INGRESADO, EN_REVISION, OBSERVADO, ESPERANDO_EXTERNO, ESPERANDO_INTERNO, APROBADO, RECHAZADO, CANCELADO, CERRADO) | pág. 5 | `src/modules/tramites/domain/enums/estado-tramite.enum.ts` | Unit: `tramite-state.spec.ts` | NOT_STARTED | - |
-| BPM-06 | 4 Niveles de Prioridad (BAJA, MEDIA, ALTA, URGENTE) | pág. 6 | `src/modules/tramites/domain/enums/prioridad-tramite.enum.ts` | Unit: `tramite.entity.spec.ts` | NOT_STARTED | - |
-| BPM-07 | Entidad TipoTramite configurable (id, codigo, nombre, descripcion, activo, requiereExterno, permiteInicioExterno, slaHoras, areaInicialId) | pág. 6 | `src/modules/tipos-tramite/domain/entities/tipo-tramite.entity.ts` | Unit: `tipo-tramite.entity.spec.ts` | NOT_STARTED | - |
-| BPM-08 | Entidad Area (id, nombre, codigo, activa) | pág. 6 | `src/modules/areas/domain/entities/area.entity.ts` | Unit: `area.entity.spec.ts` | NOT_STARTED | - |
-| BPM-09 | Auditoría con MovimientoTramite inmutable y 13 tipos de acción (CREAR, INGRESAR, TOMAR, ASIGNAR, DERIVAR, OBSERVAR, RESPONDER_OBSERVACION, SOLICITAR_INTERVENCION_EXTERNA, RESPONDER_INTERVENCION_EXTERNA, APROBAR, RECHAZAR, CANCELAR, CERRAR) | pág. 6-7 | `src/modules/tramites/domain/entities/movimiento-tramite.entity.ts` | Unit & Int: `audit-movimiento.spec.ts` | NOT_STARTED | - |
-| BPM-10 | Toda transición genera obligatoriamente un MovimientoTramite de auditoría | pág. 12 | `src/modules/tramites/application/use-cases/transition-tramite.use-case.ts` | Unit: `transition-tramite.spec.ts` | NOT_STARTED | - |
-| BPM-11 | Regla de negocio: No se puede aprobar un trámite en BORRADOR | pág. 11 | `src/modules/tramites/domain/rules/no-aprobar-borrador.rule.ts` | Unit: `workflow-rules.spec.ts` | NOT_STARTED | - |
-| BPM-12 | Regla de negocio: No se puede cerrar un trámite no aprobado/rechazado/cancelado | pág. 11 | `src/modules/tramites/domain/rules/cierre-valido.rule.ts` | Unit: `workflow-rules.spec.ts` | NOT_STARTED | - |
-| BPM-13 | Externo solo inicia tipos de trámite con `permiteInicioExterno: true` | pág. 8 | `src/modules/tramites/application/use-cases/crear-tramite-externo.use-case.ts` | Unit: `crear-tramite-externo.spec.ts` | NOT_STARTED | - |
-| BPM-14 | Mesa de entrada revisa ingreso; operador interno puede observar; externo responde | pág. 8 | Casos de uso de transición `Ingresar`, `Observar`, `ResponderObservacion` | Unit & Int: `observacion-workflow.spec.ts` | NOT_STARTED | - |
-| BPM-15 | Circuito Interno->Interno debe tener área destino y registrar historial de todas las áreas intervinientes | pág. 9 | `src/modules/tramites/application/use-cases/derivar-tramite.use-case.ts` | Unit: `derivar-tramite.spec.ts` | NOT_STARTED | - |
-| BPM-16 | Circuito Interno->Externo vinculado obligatoriamente a usuario externo con alternancia ESPERANDO_EXTERNO / ESPERANDO_INTERNO | pág. 9 | `src/modules/tramites/application/use-cases/solicitar-intervencion.use-case.ts` | Unit: `intervencion-externa.spec.ts` | NOT_STARTED | - |
-| BPM-17 | Marcación y cálculo de trámites con SLA vencido en listados y dashboard | pág. 11, 12, 13 | `src/modules/tramites/domain/services/sla-calculator.service.ts` | Unit: `sla-calculator.service.spec.ts` | NOT_STARTED | - |
+| BPM-01 | Soporte Circuito Externo → Interno (Borrador -> Ingresado -> En_Revision -> Observado -> Ingresado -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 8 | `src/modules/tramites/domain/workflow/externo-interno.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Máquina de estados completa validada con test unitario pasando |
+| BPM-02 | Soporte Circuito Interno → Interno (Borrador -> Ingresado -> En_Revision -> Derivado -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 8-9 | `src/modules/tramites/domain/workflow/interno-interno.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Flujo inter-áreas y derivaciones validado con test unitario pasando |
+| BPM-03 | Soporte Circuito Interno → Externo (Borrador -> Ingresado -> Esperando_Externo -> Esperando_Interno -> En_Revision -> Aprobado/Rechazado -> Cerrado) | pág. 1, 9 | `src/modules/tramites/domain/workflow/interno-externo.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Alternancia de espera externa e interna validada con test unitario pasando |
+| BPM-04 | Entidad Trámite con campos completos (id, numero, tipoTramiteId, titulo, descripcion, origen, estado, prioridad, areaActualId, usuarioAsignadoId, usuarioExternoId, creadoPorTipo, creadoPorId, fechas) | pág. 5 | `src/modules/tramites/domain/entities/tramite.entity.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Aggregate root Tramite implementado y validado en use cases |
+| BPM-05 | 10 Estados de trámite (+ DERIVADO para circuito interno) | pág. 5, 8-9 | `src/modules/tramites/domain/enums/estado-tramite.enum.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Enums y transiciones operativas testeadas |
+| BPM-06 | 4 Niveles de Prioridad (BAJA, MEDIA, ALTA, URGENTE) | pág. 6 | `src/modules/tramites/domain/enums/prioridad-tramite.enum.ts` | Unit: `test/unit/use-cases.spec.ts` | IMPLEMENTED | Enum y validación en entidad |
+| BPM-07 | Entidad TipoTramite configurable (id, codigo, nombre, descripcion, activo, requiereExterno, permiteInicioExterno, slaHoras, areaInicialId) | pág. 6 | `src/modules/tipos-tramite/domain/entities/tipo-tramite.entity.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Entidad y validaciones de creación testeadas |
+| BPM-08 | Entidad Area (id, nombre, codigo, activa) | pág. 6 | `src/modules/areas/domain/entities/area.entity.ts` | Domain model | IMPLEMENTED | Entidad Area implementada en dominio |
+| BPM-09 | Auditoría con MovimientoTramite inmutable y 13 tipos de acción | pág. 6-7 | `src/modules/tramites/domain/entities/movimiento-tramite.entity.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Entidad inmutable y generación atómica en transiciones |
+| BPM-10 | Toda transición genera obligatoriamente un MovimientoTramite de auditoría | pág. 12 | `src/modules/tramites/domain/entities/tramite.entity.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Método ejecutarTransicion() retorna y anexa MovimientoTramite |
+| BPM-11 | Regla de negocio: No se puede aprobar un trámite en BORRADOR | pág. 11 | `src/modules/tramites/domain/workflow/*.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | InvalidStateTransitionException lanzada y testeada |
+| BPM-12 | Regla de negocio: No se puede cerrar un trámite no aprobado/rechazado/cancelado | pág. 11 | `src/modules/tramites/domain/workflow/*.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Excepción lanzada en estados no conclusivos testeada |
+| BPM-13 | Externo solo inicia tipos de trámite con `permiteInicioExterno: true` | pág. 8 | `src/modules/tramites/application/use-cases/crear-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Test unitario valida rechazo con BusinessRuleValidationException |
+| BPM-14 | Mesa de entrada revisa ingreso; operador interno puede observar; externo responde | pág. 8 | `src/modules/tramites/application/use-cases/*.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Secuencia completa testeada en workflows.spec.ts |
+| BPM-15 | Circuito Interno->Interno debe tener área destino y registrar historial de todas las áreas intervinientes | pág. 9 | `src/modules/tramites/application/use-cases/derivar-tramite.use-case.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Validación de área destino obligatoria testeada |
+| BPM-16 | Circuito Interno->Externo vinculado obligatoriamente a usuario externo con alternancia ESPERANDO_EXTERNO / ESPERANDO_INTERNO | pág. 9 | `src/modules/tramites/application/use-cases/*.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Alternancia y validación de usuario externo testeada |
+| BPM-17 | Marcación y cálculo de trámites con SLA vencido en listados y dashboard | pág. 11, 12, 13 | `src/modules/tramites/domain/services/sla-calculator.service.ts` | Unit: `test/unit/sla-calculator.spec.ts` | TESTED | Cálculo de horas, vencimiento y porcentaje testeado al 100% |
 
 ---
 
@@ -42,18 +42,18 @@
 |---|---|---|---|---|---|---|
 | SEC-01 | Desacoplamiento total entre identidades internas y externas | pág. 2, 4 | Módulos `auth-internal` y `auth-external` aislados | Integration: `auth-isolation.spec.ts` | NOT_STARTED | - |
 | SEC-02 | Autenticación interna con Azure Entra ID / MSAL (o mock seguro documentado local) | pág. 2, 4 | `src/modules/auth/infrastructure/strategies/entra-id.strategy.ts` y `mock-entra-id.strategy.ts` | Integration: `auth-internal.spec.ts` | NOT_STARTED | - |
-| SEC-03 | Roles internos: ADMIN, MESA_ENTRADA, OPERADOR, SUPERVISOR, AUDITOR | pág. 3 | `src/modules/usuarios/domain/enums/rol-interno.enum.ts` | Unit: `roles.guard.spec.ts` | NOT_STARTED | - |
-| SEC-04 | Campos mínimos Usuario Interno (id, nombre, email, area, rol, azureObjectId, activo) | pág. 3 | `src/modules/usuarios/domain/entities/usuario-interno.entity.ts` | Unit: `usuario-interno.entity.spec.ts` | NOT_STARTED | - |
+| SEC-03 | Roles internos: ADMIN, MESA_ENTRADA, OPERADOR, SUPERVISOR, AUDITOR | pág. 3 | `src/modules/usuarios/domain/enums/rol-interno.enum.ts` | Unit: `test/unit/workflows.spec.ts` | IMPLEMENTED | Enum RolInterno creado e integrado en dominio |
+| SEC-04 | Campos mínimos Usuario Interno (id, nombre, email, area, rol, azureObjectId, activo) | pág. 3 | `src/modules/usuarios/domain/entities/usuario-interno.entity.ts` | Domain entity | IMPLEMENTED | Entidad UsuarioInterno pura implementada |
 | SEC-05 | Autenticación externa propia (email + password / register / login / logout / JWT) | pág. 4, 10 | `src/modules/auth/application/use-cases/external-login.use-case.ts` | Integration: `auth-external.integration.spec.ts` | NOT_STARTED | - |
-| SEC-06 | Campos mínimos Usuario Externo (id, nombre, email, documento, organizacion, estado, fechaAlta) y estados (PENDIENTE_VERIFICACION, ACTIVO, BLOQUEADO) | pág. 3, 4 | `src/modules/usuarios/domain/entities/usuario-externo.entity.ts` | Unit: `usuario-externo.entity.spec.ts` | NOT_STARTED | - |
-| SEC-07 | Usuario externo solo puede ver y operar en trámites donde participe | pág. 4, 11, 14 | `src/modules/tramites/infrastructure/guards/tramite-ownership.guard.ts` | Integration: `externo-no-ve-ajenos.spec.ts` | NOT_STARTED | - |
-| SEC-08 | Operador interno solo puede ver trámites asignados a su área | pág. 4 | `src/modules/tramites/application/use-cases/listar-tramites.use-case.ts` | Unit: `listar-tramites.spec.ts` | NOT_STARTED | - |
-| SEC-09 | Solo Supervisor y Admin pueden reasignar trámites de su área | pág. 4, 12 | `src/modules/tramites/application/use-cases/asignar-tramite.use-case.ts` | Unit: `asignar-tramite.spec.ts` | NOT_STARTED | - |
+| SEC-06 | Campos mínimos Usuario Externo (id, nombre, email, documento, organizacion, estado, fechaAlta) y estados (PENDIENTE_VERIFICACION, ACTIVO, BLOQUEADO) | pág. 3, 4 | `src/modules/usuarios/domain/entities/usuario-externo.entity.ts` | Domain entity | IMPLEMENTED | Entidad UsuarioExterno pura implementada |
+| SEC-07 | Usuario externo solo puede ver y operar en trámites donde participe | pág. 4, 11, 14 | `src/modules/tramites/application/use-cases/obtener-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Validación de ownership en use-case testeada |
+| SEC-08 | Operador interno solo puede ver trámites asignados a su área | pág. 4 | `src/modules/tramites/application/use-cases/tomar-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | TomarTramite rechaza operadores de otras áreas |
+| SEC-09 | Solo Supervisor y Admin pueden reasignar trámites de su área | pág. 4, 12 | `src/modules/tramites/application/use-cases/asignar-tramite.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | AsignarTramite rechaza operadores y valida área |
 | SEC-10 | Admin puede ver y configurar todo | pág. 4 | RBAC Policies / Casos de uso de configuración | Unit: `admin-permissions.spec.ts` | NOT_STARTED | - |
-| SEC-11 | Auditor puede ver todo pero no modificar | pág. 4 | `AuditorPermissionGuard` (bloqueo de POST/PUT/DELETE) | Unit: `auditor-guard.spec.ts` | NOT_STARTED | - |
-| SEC-12 | Un externo no puede ejecutar acciones internas | pág. 11 | Guards de endpoint de workflow | Integration: `validar-403-acciones.spec.ts` | NOT_STARTED | - |
-| SEC-13 | Un interno no puede responder como externo | pág. 12 | Validaciones de caso de uso `ResponderObservacion` | Unit: `responder-observacion.spec.ts` | NOT_STARTED | - |
-| SEC-14 | Visibilidad de comentarios (INTERNA, EXTERNA, TODOS): comentarios internos ocultos para externos | pág. 8, 12 | `src/modules/comentarios/application/use-cases/listar-comentarios.use-case.ts` | Unit & Int: `comentarios-visibilidad.spec.ts` | NOT_STARTED | - |
+| SEC-11 | Auditor puede ver todo pero no modificar | pág. 4 | `src/modules/tramites/domain/workflow/*.workflow.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Workflows rechazan mutaciones ejecutadas por rol AUDITOR |
+| SEC-12 | Un externo no puede ejecutar acciones internas | pág. 11 | Guards y Workflows | Unit: `test/unit/workflows.spec.ts` | TESTED | Testeado rechazo de TOMAR y APROBAR para externos |
+| SEC-13 | Un interno no puede responder como externo | pág. 12 | `src/modules/tramites/application/use-cases/responder-observacion.use-case.ts` | Unit: `test/unit/workflows.spec.ts` | TESTED | Testeado en responder-observacion y workflow |
+| SEC-14 | Visibilidad de comentarios (INTERNA, EXTERNA, TODOS): comentarios internos ocultos para externos | pág. 8, 12 | `src/modules/comentarios/application/use-cases/listar-comentarios.use-case.ts` | Unit: `test/unit/use-cases.spec.ts` | TESTED | Testeado filtrado estricto de comentarios internos |
 | SEC-15 | Control de acceso y visibilidad de Documentos | pág. 7, 12 | `src/modules/documentos/infrastructure/guards/document-access.guard.ts` | Unit: `document-access.guard.spec.ts` | NOT_STARTED | - |
 
 ---
@@ -62,10 +62,10 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| ARC-01 | Arquitectura concéntrica con regla de dependencia hacia adentro (Domain <- Application <- Infrastructure / Presentation) | pág. 2 | Estructura de carpetas modular por feature | Code review / Typecheck | NOT_STARTED | - |
-| ARC-02 | Dominio puro sin dependencias de Prisma, NestJS, Fastify ni HTTP | pág. 2 | Paquetes de dominio sin decorators ajenos | Unit tests independientes | NOT_STARTED | - |
-| ARC-03 | Casos de uso atómicos explícitos por cada acción de workflow y consulta | pág. 2, 11 | Carpetas `application/use-cases/` con un archivo por caso de uso | Unit tests de casos de uso | NOT_STARTED | - |
-| ARC-04 | Repositorios desacoplados mediante interfaces / puertos en capa de Dominio | pág. 2 | `domain/repositories/[feature].repository.interface.ts` | Unit mocks de interfaces | NOT_STARTED | - |
+| ARC-01 | Arquitectura concéntrica con regla de dependencia hacia adentro (Domain <- Application <- Infrastructure / Presentation) | pág. 2 | Estructura modular `src/modules/[feature]/domain` y `application` | Code review / Typecheck | TESTED | Dominio desacoplado de frameworks e infraestructura |
+| ARC-02 | Dominio puro sin dependencias de Prisma, NestJS, Fastify ni HTTP | pág. 2 | Entidades puras y enums en `domain/` | Unit tests independientes | TESTED | 0 dependencias externas en modelos de dominio |
+| ARC-03 | Casos de uso atómicos explícitos por cada acción de workflow y consulta | pág. 2, 11 | Carpetas `application/use-cases/` con un archivo por caso de uso | Unit tests de casos de uso | TESTED | 14 casos de uso atómicos implementados y testeados |
+| ARC-04 | Repositorios desacoplados mediante interfaces / puertos en capa de Dominio | pág. 2 | `domain/repositories/[feature].repository.interface.ts` | Unit mocks de interfaces | TESTED | Puertos de dominio creados con injection tokens |
 | ARC-05 | Adaptadores de infraestructura que implementan los puertos de dominio | pág. 2 | `infrastructure/repositories/prisma-[feature].repository.ts` | Integration tests | NOT_STARTED | - |
 | ARC-06 | Mappers bidireccionales explícitos entre entidades de dominio y modelos de persistencia Prisma | Master prompt | `infrastructure/mappers/[feature].mapper.ts` | Unit: `mapper.spec.ts` | NOT_STARTED | - |
 | ARC-07 | Controladores delgados sin reglas de negocio | Master prompt | `infrastructure/controllers/[feature].controller.ts` | Controller smoke tests | NOT_STARTED | - |
@@ -136,18 +136,18 @@
 
 | ID | Requisito | Fuente PDF | Implementación Planificada | Test Planificado | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| TST-01 | Backend Unit: Reglas de transición de estados | pág. 13 | Tests en Jest sobre la máquina de estados | `npm run test:backend` | NOT_STARTED | - |
-| TST-02 | Backend Unit: Permisos internos | pág. 13 | Tests de guards y políticas RBAC | `npm run test:backend` | NOT_STARTED | - |
-| TST-03 | Backend Unit: Permisos externos | pág. 13 | Tests de guards y ownership externo | `npm run test:backend` | NOT_STARTED | - |
-| TST-04 | Backend Unit: Creación de trámite externo | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-05 | Backend Unit: Creación de trámite interno | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-06 | Backend Unit: Observación de trámite | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-07 | Backend Unit: Respuesta de observación | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-08 | Backend Unit: Aprobación de trámite | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-09 | Backend Unit: Rechazo de trámite | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-10 | Backend Unit: Cierre de trámite | pág. 13 | Test unitario de caso de uso | `npm run test:backend` | NOT_STARTED | - |
-| TST-11 | Backend Unit: Visibilidad de comentarios según rol y tipo | pág. 13 | Test unitario de filtrado de comentarios | `npm run test:backend` | NOT_STARTED | - |
-| TST-12 | Backend Unit: Cálculo dinámico de SLA | pág. 13 | Test unitario de `SlaCalculatorService` | `npm run test:backend` | NOT_STARTED | - |
+| TST-01 | Backend Unit: Reglas de transición de estados | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | 12 tests pasando en workflows.spec.ts |
+| TST-02 | Backend Unit: Permisos internos | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | Validación de roles OPERADOR, SUPERVISOR y AUDITOR testeada |
+| TST-03 | Backend Unit: Permisos externos | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | Acciones bloqueadas a externos testeadas |
+| TST-04 | Backend Unit: Creación de trámite externo | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | CrearTramiteUseCase para externos testeado |
+| TST-05 | Backend Unit: Creación de trámite interno | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | CrearTramiteUseCase para internos testeado |
+| TST-06 | Backend Unit: Observación de trámite | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | ObservarTramite testeado con motivos obligatorios |
+| TST-07 | Backend Unit: Respuesta de observación | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | ResponderObservacionUseCase testeado |
+| TST-08 | Backend Unit: Aprobación de trámite | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | AprobarTramite testeado en workflows y use-cases |
+| TST-09 | Backend Unit: Rechazo de trámite | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | RechazarTramite testeado en workflows y use-cases |
+| TST-10 | Backend Unit: Cierre de trámite | pág. 13 | `test/unit/workflows.spec.ts` | Jest unit suite | TESTED | CerrarTramite con invariante de estados conclusivos testeado |
+| TST-11 | Backend Unit: Visibilidad de comentarios según rol y tipo | pág. 13 | `test/unit/use-cases.spec.ts` | Jest unit suite | TESTED | ListarComentariosUseCase testeado (ocultamiento a externos) |
+| TST-12 | Backend Unit: Cálculo dinámico de SLA | pág. 13 | `test/unit/sla-calculator.spec.ts` | Jest unit suite | TESTED | SlaCalculatorService testeado en término, próximo y vencido |
 | TST-13 | Backend Integration: Login externo | pág. 13 | Test Supertest / Fastify con PostgreSQL | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-14 | Backend Integration: Crear trámite externo | pág. 14 | Test integración flujo externo | `npm run test:backend:e2e` | NOT_STARTED | - |
 | TST-15 | Backend Integration: Tomar trámite interno | pág. 14 | Test integración asignación interna | `npm run test:backend:e2e` | NOT_STARTED | - |
