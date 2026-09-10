@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -12,11 +12,14 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Box,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
-import { DocumentoTableProps } from '../interfaces/tramite.interface';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { DocumentoTableProps, DocumentoItem } from '../interfaces/tramite.interface';
 import { RolInterno } from '../../auth/interfaces/auth.interface';
+import { DocumentoPreviewModal } from './DocumentoPreviewModal';
 
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -32,6 +35,8 @@ export const DocumentoTable: React.FC<DocumentoTableProps> = ({
   isLoading = false,
   onEliminar,
 }) => {
+  const [previewDoc, setPreviewDoc] = useState<DocumentoItem | null>(null);
+
   if (documentos.length === 0) {
     return (
       <Paper
@@ -53,7 +58,11 @@ export const DocumentoTable: React.FC<DocumentoTableProps> = ({
   }
 
   return (
-    <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+    <TableContainer
+      component={Paper}
+      elevation={0}
+      sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}
+    >
       <Table size="small" aria-label="tabla de documentos">
         <TableHead sx={{ bgcolor: '#f8fafc' }}>
           <TableRow>
@@ -62,7 +71,9 @@ export const DocumentoTable: React.FC<DocumentoTableProps> = ({
             <TableCell sx={{ fontWeight: 700 }}>Tamaño</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Subido por</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Fecha</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
+            <TableCell align="center" sx={{ fontWeight: 700 }}>
+              Acciones
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -89,28 +100,47 @@ export const DocumentoTable: React.FC<DocumentoTableProps> = ({
                 </TableCell>
                 <TableCell>{doc.mimeType}</TableCell>
                 <TableCell>{formatBytes(doc.size)}</TableCell>
-                <TableCell>{doc.subidoPorTipo} ({doc.subidoPorId})</TableCell>
+                <TableCell>
+                  {doc.subidoPorTipo} ({doc.subidoPorId})
+                </TableCell>
                 <TableCell>{fecha}</TableCell>
                 <TableCell align="center">
-                  {canDelete && (
-                    <Tooltip title="Eliminar documento">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                    <Tooltip title="Visualizar documento">
                       <IconButton
                         size="small"
-                        color="error"
-                        onClick={() => onEliminar(doc.id)}
-                        disabled={isLoading}
-                        aria-label={`Eliminar ${doc.nombreArchivo}`}
+                        color="primary"
+                        onClick={() => setPreviewDoc(doc)}
+                        aria-label={`Visualizar ${doc.nombreArchivo}`}
                       >
-                        <DeleteOutlineIcon fontSize="small" />
+                        <VisibilityOutlinedIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                  )}
+                    {canDelete && (
+                      <Tooltip title="Eliminar documento">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => onEliminar(doc.id)}
+                          disabled={isLoading}
+                          aria-label={`Eliminar ${doc.nombreArchivo}`}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
+      <DocumentoPreviewModal
+        documento={previewDoc}
+        open={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+      />
     </TableContainer>
   );
 };

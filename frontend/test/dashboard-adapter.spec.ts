@@ -15,9 +15,7 @@ describe('DashboardAdapter', () => {
         EXTERNO: 10,
         INTERNO: 5,
       },
-      porArea: [
-        { areaId: 'area-1', cantidad: 6 },
-      ],
+      porArea: [{ areaId: 'area-1', cantidad: 6 }],
       sla: {
         EN_TERMINO: 8,
         PROXIMO_A_VENCER: 2,
@@ -34,6 +32,10 @@ describe('DashboardAdapter', () => {
     expect(stats.tramitesVencidosSla).toBe(3);
     expect(stats.cumplimientoSlaPorcentaje).toBe(77);
     expect(stats.tramitesPorPrioridad).toBeDefined();
+    expect(stats.tramitesPorOrigen).toHaveLength(2);
+    expect(stats.tramitesPorArea).toHaveLength(1);
+    expect(stats.promedioResolucionHoras).toBe(0);
+    expect(stats.ultimosMovimientos).toEqual([]);
   });
 
   it('toStats debe ser resiliente ante campos nulos o ausentes', () => {

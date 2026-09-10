@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,8 +11,16 @@ import {
   MenuItem,
   CircularProgress,
   Box,
+  Typography,
+  Paper,
+  Chip,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import DescriptionIcon from '@mui/icons-material/Description';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { DocumentoUploadModalProps } from '../interfaces/tramite.interface';
@@ -23,6 +31,9 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+
   const formik = useFormik({
     initialValues: {
       nombreArchivo: '',
@@ -35,7 +46,10 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
         .required('El nombre del archivo es obligatorio')
         .matches(/\.[0-9a-z]+$/i, 'Debe incluir una extensión válida (ej: .pdf, .docx, .png)'),
       mimeType: Yup.string().required('El tipo de archivo es obligatorio'),
-      sizeKB: Yup.number().positive('Debe ser mayor a 0').max(25000, 'Tamaño máximo 25 MB').required(),
+      sizeKB: Yup.number()
+        .positive('Debe ser mayor a 0')
+        .max(25000, 'Tamaño máximo 25 MB')
+        .required(),
     }),
     onSubmit: async (values, { resetForm }) => {
       const storageKey = `docs/${Date.now()}-${values.nombreArchivo.replace(/\s+/g, '_')}`;
@@ -48,17 +62,33 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
 
       if (ok) {
         resetForm();
+        setSelectedFileName(null);
         onClose();
       }
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+      formik.setFieldValue('nombreArchivo', file.name);
+      formik.setFieldValue('mimeType', file.type || 'application/pdf');
+      formik.setFieldValue('sizeKB', Math.max(1, Math.round(file.size / 1024)));
+    }
+  };
+
   const handleClose = () => {
     if (!isLoading) {
       formik.resetForm();
+      setSelectedFileName(null);
       onClose();
     }
   };
+
+  const isPdf =
+    formik.values.mimeType.includes('pdf') || formik.values.nombreArchivo.endsWith('.pdf');
+  const isImage = formik.values.mimeType.startsWith('image/');
 
   return (
     <Dialog
@@ -73,7 +103,96 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
       </DialogTitle>
       <form onSubmit={formik.handleSubmit}>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+            />
+
+            <Paper
+              elevation={0}
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                p: 2.5,
+                textAlign: 'center',
+                cursor: 'pointer',
+                bgcolor: selectedFileName ? '#f0fdf4' : '#f8fafc',
+                border: '2px dashed',
+                borderColor: selectedFileName ? '#86efac' : '#cbd5e1',
+                borderRadius: 2,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: '#f1f5f9',
+                },
+              }}
+            >
+              {selectedFileName ? (
+                <Box
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+                >
+                  <CheckCircleIcon sx={{ fontSize: 36, color: '#16a34a' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#15803d' }}>
+                    Archivo seleccionado: {selectedFileName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Haz clic si deseas seleccionar otro archivo
+                  </Typography>
+                </Box>
+              ) : (
+                <Box
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+                >
+                  <CloudUploadIcon sx={{ fontSize: 40, color: '#64748b' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    Haz clic para elegir un archivo de tu equipo
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    PDF, PNG, JPG, Word o Excel (Máximo 25 MB)
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+
+            {formik.values.nombreArchivo && (
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                }}
+              >
+                {isPdf ? (
+                  <PictureAsPdfIcon color="error" />
+                ) : isImage ? (
+                  <ImageIcon color="primary" />
+                ) : (
+                  <DescriptionIcon color="action" />
+                )}
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                    {formik.values.nombreArchivo}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formik.values.mimeType} • {formik.values.sizeKB} KB
+                  </Typography>
+                </Box>
+                <Chip
+                  label="Listo para adjuntar"
+                  size="small"
+                  color="success"
+                  sx={{ fontSize: '0.7rem' }}
+                />
+              </Box>
+            )}
+
             <TextField
               id="doc-nombre-archivo-input"
               name="nombreArchivo"
@@ -85,7 +204,6 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
               onBlur={formik.handleBlur}
               error={formik.touched.nombreArchivo && Boolean(formik.errors.nombreArchivo)}
               helperText={formik.touched.nombreArchivo && formik.errors.nombreArchivo}
-              autoFocus
             />
 
             <TextField
@@ -112,7 +230,7 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
               id="doc-size-input"
               name="sizeKB"
               type="number"
-              label="Tamaño simulado (en KB)"
+              label="Tamaño (en KB)"
               fullWidth
               value={formik.values.sizeKB}
               onChange={formik.handleChange}
@@ -131,9 +249,11 @@ export const DocumentoUploadModal: React.FC<DocumentoUploadModalProps> = ({
             variant="contained"
             color="primary"
             disabled={isLoading || !formik.isValid}
-            startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : <CloudUploadIcon />}
+            startIcon={
+              isLoading ? <CircularProgress size={18} color="inherit" /> : <AttachFileIcon />
+            }
           >
-            Cargar y Adjuntar
+            Adjuntar Documento
           </Button>
         </DialogActions>
       </form>

@@ -15,6 +15,9 @@ import { PrioridadTramite } from '../../src/modules/tramites/domain/enums/priori
 import { AccionWorkflow } from '../../src/modules/tramites/domain/enums/accion-workflow.enum';
 import { EntityNotFoundException } from '../../src/shared/domain/exceptions/domain.exception';
 
+import { IAreaRepository } from '../../src/modules/areas/domain/repositories/area.repository.interface';
+import { Area } from '../../src/modules/areas/domain/entities/area.entity';
+
 describe('Documentos y Dashboard Use Cases', () => {
   describe('ObtenerDocumentoUseCase', () => {
     let documentoRepoMock: jest.Mocked<IDocumentoTramiteRepository>;
@@ -93,6 +96,7 @@ describe('Documentos y Dashboard Use Cases', () => {
     let tramiteRepoMock: jest.Mocked<ITramiteRepository>;
     let tipoTramiteRepoMock: jest.Mocked<ITipoTramiteRepository>;
     let movimientoRepoMock: jest.Mocked<IMovimientoTramiteRepository>;
+    let areaRepoMock: jest.Mocked<IAreaRepository>;
 
     beforeEach(() => {
       tramiteRepoMock = {
@@ -120,6 +124,22 @@ describe('Documentos y Dashboard Use Cases', () => {
         findByTramiteId: jest.fn(),
         save: jest.fn(),
         findUltimosMovimientos: jest.fn(),
+      };
+
+      areaRepoMock = {
+        findById: jest.fn(),
+        findByCodigo: jest.fn(),
+        findAll: jest.fn().mockResolvedValue([
+          new Area({
+            id: 'area-1',
+            nombre: 'Legales',
+            codigo: 'LEG',
+            activa: true,
+            fechaCreacion: new Date(),
+          }),
+        ]),
+        save: jest.fn(),
+        update: jest.fn(),
       };
     });
 
@@ -198,6 +218,7 @@ describe('Documentos y Dashboard Use Cases', () => {
         tramiteRepoMock,
         tipoTramiteRepoMock,
         movimientoRepoMock,
+        areaRepoMock,
       );
 
       const stats = await useCase.execute();

@@ -11,14 +11,24 @@ import {
   IMovimientoTramiteRepository,
   MOVIMIENTO_TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/movimiento-tramite.repository.interface';
+import {
+  IAreaRepository,
+  AREA_REPOSITORY_TOKEN,
+} from '../../../areas/domain/repositories/area.repository.interface';
 import { SlaCalculatorService, SlaStatus } from '../../domain/services/sla-calculator.service';
 import { EstadoTramite } from '../../domain/enums/estado-tramite.enum';
 import { MovimientoResponseDto, TramiteResponseMapper } from '../mappers/tramite-response.mapper';
 
+export interface DashboardAreaStatDto {
+  areaId: string;
+  nombreArea?: string;
+  cantidad: number;
+}
+
 export interface DashboardStatsDto {
   porEstado: Record<string, number>;
   porOrigen: Record<string, number>;
-  porArea: Array<{ areaId: string; cantidad: number }>;
+  porArea: DashboardAreaStatDto[];
   sla: Record<SlaStatus, number>;
   vencidosSla: number;
   promedioResolucionHoras: number;
@@ -36,16 +46,27 @@ export class ObtenerEstadisticasDashboardUseCase {
     private readonly tipoTramiteRepository: ITipoTramiteRepository,
     @Inject(MOVIMIENTO_TRAMITE_REPOSITORY_TOKEN)
     private readonly movimientoRepository: IMovimientoTramiteRepository,
+    @Inject(AREA_REPOSITORY_TOKEN)
+    private readonly areaRepository: IAreaRepository,
   ) {}
 
   async execute(): Promise<DashboardStatsDto> {
-    const [porEstado, porOrigen, porArea, allActive, ultimosMovimientosRaw] = await Promise.all([
-      this.tramiteRepository.countByEstado(),
-      this.tramiteRepository.countByOrigen(),
-      this.tramiteRepository.countByArea(),
-      this.tramiteRepository.findAll({ take: 1000 }),
-      this.movimientoRepository.findUltimosMovimientos(10),
-    ]);
+    const [porEstado, porOrigen, rawPorArea, allActive, ultimosMovimientosRaw, areas] =
+      await Promise.all([
+        this.tramiteRepository.countByEstado(),
+        this.tramiteRepository.countByOrigen(),
+        this.tramiteRepository.countByArea(),
+        this.tramiteRepository.findAll({ take: 1000 }),
+        this.movimientoRepository.findUltimosMovimientos(10),
+        this.areaRepository.findAll(),
+      ]);
+
+    const areaMap = new Map(areas.map((a) => [a.id, a.nombre]));
+    const porArea: DashboardAreaStatDto[] = rawPorArea.map((item) => ({
+      areaId: item.areaId,
+      nombreArea: areaMap.get(item.areaId) || 'Mesa General',
+      cantidad: item.cantidad,
+    }));
 
     const tipos = await this.tipoTramiteRepository.findAll();
     const tiposMap = new Map(tipos.map((t) => [t.id, t.slaHoras]));

@@ -68,4 +68,16 @@ describe('DocumentoTable (Dumb Component)', () => {
 
     expect(screen.queryByLabelText('Eliminar expediente_firmado.pdf')).toBeNull();
   });
+
+  it('debe renderizar el botón de visualización y abrir el modal DocumentoPreviewModal al hacer clic', () => {
+    const onEliminar = vi.fn();
+    render(<DocumentoTable documentos={mockDocs} user={adminUser} onEliminar={onEliminar} />);
+
+    const viewBtn = screen.getByLabelText('Visualizar expediente_firmado.pdf');
+    expect(viewBtn).toBeDefined();
+
+    fireEvent.click(viewBtn);
+    expect(screen.getByText(/Vista Previa del Documento PDF/i)).toBeDefined();
+    expect(screen.getByText(/Clave de Almacenamiento/i)).toBeDefined();
+  });
 });
