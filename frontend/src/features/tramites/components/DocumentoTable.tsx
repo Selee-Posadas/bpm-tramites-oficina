@@ -94,9 +94,13 @@ export const DocumentoTable: React.FC<DocumentoTableProps> = ({
 
             return (
               <TableRow key={doc.id} hover>
-                <TableCell sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <InsertDriveFileOutlinedIcon fontSize="small" color="primary" />
-                  {doc.nombreArchivo}
+                <TableCell sx={{ fontWeight: 600 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <InsertDriveFileOutlinedIcon fontSize="small" color="primary" />
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {doc.nombreArchivo}
+                    </Typography>
+                  </Box>
                 </TableCell>
                 <TableCell>{doc.mimeType}</TableCell>
                 <TableCell>{formatBytes(doc.size)}</TableCell>
