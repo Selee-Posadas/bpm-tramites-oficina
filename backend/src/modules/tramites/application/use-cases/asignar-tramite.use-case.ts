@@ -9,8 +9,6 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
 
 export interface AsignarTramiteCommand {
@@ -28,7 +26,7 @@ export class AsignarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: AsignarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: AsignarTramiteCommand): Promise<Tramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -67,7 +65,6 @@ export class AsignarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toTransitionDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

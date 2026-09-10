@@ -3,12 +3,7 @@ import {
   IAreaRepository,
   AREA_REPOSITORY_TOKEN,
 } from '../../domain/repositories/area.repository.interface';
-import {
-  AreaResponseMapper,
-  AreaResponseDto,
-} from '../mappers/area-response.mapper';
-
-export { AreaResponseDto };
+import { Area } from '../../domain/entities/area.entity';
 
 @Injectable()
 export class ListarAreasUseCase {
@@ -17,8 +12,7 @@ export class ListarAreasUseCase {
     private readonly areaRepository: IAreaRepository,
   ) {}
 
-  async execute(soloActivas = true): Promise<AreaResponseDto[]> {
-    const areas = await this.areaRepository.findAll(soloActivas);
-    return AreaResponseMapper.toListResponseDto(areas);
+  async execute(soloActivas = true): Promise<Area[]> {
+    return await this.areaRepository.findAll(soloActivas);
   }
 }

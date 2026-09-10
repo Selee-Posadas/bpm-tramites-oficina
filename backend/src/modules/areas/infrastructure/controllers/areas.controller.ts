@@ -20,6 +20,7 @@ import { InternalAuthGuard } from '../../../auth/infrastructure/guards/internal-
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
+import { AreaResponseMapper } from '../../application/mappers/area-response.mapper';
 
 @Controller('areas')
 export class AreasController {
@@ -33,12 +34,14 @@ export class AreasController {
   @Get()
   async findAll(@Query('soloActivas') soloActivas?: string) {
     const activas = soloActivas === 'false' ? false : true;
-    return await this.listarAreasUseCase.execute(activas);
+    const areas = await this.listarAreasUseCase.execute(activas);
+    return AreaResponseMapper.toListResponseDto(areas);
   }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    return await this.obtenerAreaUseCase.execute(id);
+    const area = await this.obtenerAreaUseCase.execute(id);
+    return AreaResponseMapper.toResponseDto(area);
   }
 
   @Post()
@@ -46,22 +49,24 @@ export class AreasController {
   @Roles(RolInterno.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateAreaDto) {
-    return await this.crearAreaUseCase.execute({
+    const area = await this.crearAreaUseCase.execute({
       nombre: dto.nombre,
       codigo: dto.codigo,
       activa: dto.activa,
     });
+    return AreaResponseMapper.toResponseDto(area);
   }
 
   @Put(':id')
   @UseGuards(InternalAuthGuard, RolesGuard)
   @Roles(RolInterno.ADMIN)
   async update(@Param('id') id: string, @Body() dto: UpdateAreaDto) {
-    return await this.actualizarAreaUseCase.execute({
+    const area = await this.actualizarAreaUseCase.execute({
       id,
       nombre: dto.nombre,
       codigo: dto.codigo,
       activa: dto.activa,
     });
+    return AreaResponseMapper.toResponseDto(area);
   }
 }

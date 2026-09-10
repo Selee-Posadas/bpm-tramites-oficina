@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
@@ -8,8 +9,6 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
 
 export interface AprobarTramiteCommand {
@@ -27,7 +26,7 @@ export class AprobarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: AprobarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: AprobarTramiteCommand): Promise<Tramite> {
     if (command.contexto.usuarioTipo !== TipoUsuario.INTERNO) {
       throw new UnauthorizedActionException('Solo personal interno puede aprobar trámites');
     }
@@ -39,7 +38,7 @@ export class AprobarTramiteUseCase {
 
     const contextWithReason: WorkflowContext = {
       ...command.contexto,
-      motivo: command.motivo || 'Dictamen de aprobación favorable',
+      motivo: command.motivo,
     };
 
     const movimientoId = crypto.randomUUID();
@@ -50,7 +49,6 @@ export class AprobarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toTransitionDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

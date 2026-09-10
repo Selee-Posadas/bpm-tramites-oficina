@@ -16,10 +16,6 @@ export interface EliminarDocumentoCommand {
   rolInterno?: RolInterno;
 }
 
-export interface EliminarDocumentoResponseDto {
-  message: string;
-}
-
 @Injectable()
 export class EliminarDocumentoUseCase {
   constructor(
@@ -27,7 +23,7 @@ export class EliminarDocumentoUseCase {
     private readonly documentoRepository: IDocumentoTramiteRepository,
   ) {}
 
-  async execute(command: EliminarDocumentoCommand): Promise<EliminarDocumentoResponseDto> {
+  async execute(command: EliminarDocumentoCommand): Promise<void> {
     const doc = await this.documentoRepository.findById(command.documentoId);
     if (!doc || doc.tramiteId !== command.tramiteId) {
       throw new EntityNotFoundException('Documento', command.documentoId);
@@ -43,6 +39,5 @@ export class EliminarDocumentoUseCase {
     }
 
     await this.documentoRepository.delete(command.documentoId);
-    return { message: 'Documento eliminado con éxito' };
   }
 }

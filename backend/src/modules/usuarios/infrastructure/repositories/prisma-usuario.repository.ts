@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IUsuarioRepository } from '../../domain/repositories/usuario.repository.interface';
 import { UsuarioInterno } from '../../domain/entities/usuario-interno.entity';
 import { UsuarioExterno } from '../../domain/entities/usuario-externo.entity';
+import { RolInterno } from '../../domain/enums/rol-interno.enum';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { UsuarioMapper } from '../mappers/usuario.mapper';
 
@@ -19,6 +20,13 @@ export class PrismaUsuarioRepository implements IUsuarioRepository {
     return raw ? UsuarioMapper.toDomainInterno(raw) : null;
   }
 
+  async findInternoByRol(rol: RolInterno): Promise<UsuarioInterno | null> {
+    const raw = await this.prisma.usuarioInterno.findFirst({
+      where: { rol: rol as unknown as RolInterno, activo: true },
+    });
+    return raw ? UsuarioMapper.toDomainInterno(raw) : null;
+  }
+
   async findAllInternos(areaId?: string): Promise<UsuarioInterno[]> {
     const raws = await this.prisma.usuarioInterno.findMany({
       where: areaId ? { areaId, activo: true } : { activo: true },
@@ -27,8 +35,8 @@ export class PrismaUsuarioRepository implements IUsuarioRepository {
     return raws.map(UsuarioMapper.toDomainInterno);
   }
 
-  async saveInterno(usuario: UsuarioInterno, passwordHash?: string | null): Promise<UsuarioInterno> {
-    const data = UsuarioMapper.toPersistenceInterno(usuario, passwordHash);
+  async saveInterno(usuario: UsuarioInterno): Promise<UsuarioInterno> {
+    const data = UsuarioMapper.toPersistenceInterno(usuario);
     const raw = await this.prisma.usuarioInterno.create({ data });
     return UsuarioMapper.toDomainInterno(raw);
   }
@@ -43,8 +51,8 @@ export class PrismaUsuarioRepository implements IUsuarioRepository {
     return raw ? UsuarioMapper.toDomainExterno(raw) : null;
   }
 
-  async saveExterno(usuario: UsuarioExterno, passwordHash = ''): Promise<UsuarioExterno> {
-    const data = UsuarioMapper.toPersistenceExterno(usuario, passwordHash);
+  async saveExterno(usuario: UsuarioExterno): Promise<UsuarioExterno> {
+    const data = UsuarioMapper.toPersistenceExterno(usuario);
     const raw = await this.prisma.usuarioExterno.create({ data });
     return UsuarioMapper.toDomainExterno(raw);
   }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { TiposTramiteModule } from '../tipos-tramite/tipos-tramite.module';
@@ -47,7 +47,7 @@ import { DashboardController } from './infrastructure/controllers/dashboard.cont
 @Module({
   imports: [
     PrismaModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
     TiposTramiteModule,
     AreasModule,
     UsuariosModule,

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
-import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
 import { IMovimientoTramiteRepository, MOVIMIENTO_TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/movimiento-tramite.repository.interface';
@@ -9,8 +9,7 @@ import {
   BusinessRuleValidationException,
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import * as crypto from 'crypto';
 
 export interface ResponderIntervencionExternaCommand {
@@ -28,13 +27,13 @@ export class ResponderIntervencionExternaUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: ResponderIntervencionExternaCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: ResponderIntervencionExternaCommand): Promise<Tramite> {
     if (!command.respuesta || command.respuesta.trim().length === 0) {
-      throw new BusinessRuleValidationException('La respuesta o detalle de documentación aportada es obligatoria');
+      throw new BusinessRuleValidationException('El mensaje de respuesta a la intervención externa es obligatorio');
     }
 
     if (command.contexto.usuarioTipo !== TipoUsuario.EXTERNO) {
-      throw new UnauthorizedActionException('Solo un usuario externo puede responder a una intervención externa');
+      throw new UnauthorizedActionException('Solo usuarios externos destinatarios pueden responder la intervención');
     }
 
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
@@ -42,11 +41,7 @@ export class ResponderIntervencionExternaUseCase {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
     }
 
-    if (tramite.usuarioExternoId && tramite.usuarioExternoId !== command.contexto.usuarioId) {
-      throw new UnauthorizedActionException('No tiene permisos para responder en este trámite');
-    }
-
-    const contextWithAnswer: WorkflowContext = {
+    const contextWithReason: WorkflowContext = {
       ...command.contexto,
       motivo: command.respuesta,
     };
@@ -54,12 +49,11 @@ export class ResponderIntervencionExternaUseCase {
     const movimientoId = crypto.randomUUID();
     const movimiento = tramite.ejecutarTransicion(
       AccionWorkflow.RESPONDER_INTERVENCION_EXTERNA,
-      contextWithAnswer,
+      contextWithReason,
       movimientoId,
     );
 
     await this.movimientoRepository.save(movimiento);
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toTransitionDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

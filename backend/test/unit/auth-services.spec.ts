@@ -6,43 +6,42 @@ import * as bcrypt from 'bcrypt';
 import { RolInterno } from '../../src/modules/usuarios/domain/enums/rol-interno.enum';
 import { EstadoUsuarioExterno } from '../../src/modules/usuarios/domain/enums/estado-usuario-externo.enum';
 import { TipoUsuario } from '../../src/modules/tramites/domain/enums/tipo-usuario.enum';
+import { UsuarioExterno } from '../../src/modules/usuarios/domain/entities/usuario-externo.entity';
+import { UsuarioInterno } from '../../src/modules/usuarios/domain/entities/usuario-interno.entity';
 
 describe('Auth Services (External & Internal Mock)', () => {
-  let prismaMock: any;
+  let usuarioRepoMock: any;
+  let areaRepoMock: any;
   let jwtService: JwtService;
   let authExternalService: AuthExternalService;
   let authInternalService: AuthInternalService;
 
   beforeEach(() => {
-    prismaMock = {
-      usuarioExterno: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-      },
-      usuarioInterno: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        create: jest.fn(),
-      },
-      area: {
-        findFirst: jest.fn(),
-        create: jest.fn(),
-      },
+    usuarioRepoMock = {
+      findExternoByEmail: jest.fn(),
+      findExternoById: jest.fn(),
+      saveExterno: jest.fn(),
+      findInternoByEmail: jest.fn(),
+      findInternoByRol: jest.fn(),
+      findInternoById: jest.fn(),
+      saveInterno: jest.fn(),
+    };
+
+    areaRepoMock = {
+      findAll: jest.fn().mockResolvedValue([]),
+      save: jest.fn().mockImplementation((a) => Promise.resolve(a)),
     };
 
     jwtService = new JwtService({ secret: 'auth-test-secret' });
-    authExternalService = new AuthExternalService(prismaMock, jwtService);
-    authInternalService = new AuthInternalService(prismaMock, jwtService);
+    authExternalService = new AuthExternalService(usuarioRepoMock, jwtService);
+    authInternalService = new AuthInternalService(usuarioRepoMock, areaRepoMock, jwtService);
   });
 
   describe('AuthExternalService', () => {
     it('debe registrar un usuario externo con contraseña hasheada y retornar token', async () => {
-      prismaMock.usuarioExterno.findUnique.mockResolvedValue(null);
-      prismaMock.usuarioExterno.create.mockImplementation((args: any) =>
-        Promise.resolve({
-          id: 'ext-uuid-1',
-          ...args.data,
-        }),
+      usuarioRepoMock.findExternoByEmail.mockResolvedValue(null);
+      usuarioRepoMock.saveExterno.mockImplementation((u: UsuarioExterno) =>
+        Promise.resolve(u),
       );
 
       const res = await authExternalService.register({
@@ -56,11 +55,20 @@ describe('Auth Services (External & Internal Mock)', () => {
       expect(res.accessToken).toBeDefined();
       expect(res.user.email).toBe('test@empresa.com');
       expect(res.user.tipo).toBe(TipoUsuario.EXTERNO);
-      expect(prismaMock.usuarioExterno.create).toHaveBeenCalled();
+      expect(usuarioRepoMock.saveExterno).toHaveBeenCalled();
     });
 
     it('debe rechazar registro con correo duplicado (409 Conflict)', async () => {
-      prismaMock.usuarioExterno.findUnique.mockResolvedValue({ id: 'existing-id' });
+      usuarioRepoMock.findExternoByEmail.mockResolvedValue(
+        new UsuarioExterno({
+          id: 'existing-id',
+          nombre: 'Existente',
+          email: 'test@empresa.com',
+          documento: '123',
+          organizacion: 'Empresa Test S.A.',
+          estado: EstadoUsuarioExterno.ACTIVO,
+        }),
+      );
 
       await expect(
         authExternalService.register({
@@ -75,13 +83,17 @@ describe('Auth Services (External & Internal Mock)', () => {
 
     it('debe autenticar exitosamente a un usuario externo con credenciales correctas', async () => {
       const passwordHash = await bcrypt.hash('CorrectPassword!', 10);
-      prismaMock.usuarioExterno.findUnique.mockResolvedValue({
+      const usuario = new UsuarioExterno({
         id: 'ext-1',
         email: 'user@test.com',
         nombre: 'Usuario Test',
         passwordHash,
+        documento: '123',
+        organizacion: 'Empresa Test S.A.',
         estado: EstadoUsuarioExterno.ACTIVO,
       });
+
+      usuarioRepoMock.findExternoByEmail.mockResolvedValue(usuario);
 
       const res = await authExternalService.login({
         email: 'user@test.com',
@@ -94,13 +106,17 @@ describe('Auth Services (External & Internal Mock)', () => {
 
     it('debe rechazar login si el usuario está bloqueado (401)', async () => {
       const passwordHash = await bcrypt.hash('Password123!', 10);
-      prismaMock.usuarioExterno.findUnique.mockResolvedValue({
+      const usuario = new UsuarioExterno({
         id: 'ext-1',
         email: 'user@test.com',
         nombre: 'Usuario Bloqueado',
         passwordHash,
+        documento: '123',
+        organizacion: 'Empresa Test S.A.',
         estado: EstadoUsuarioExterno.BLOQUEADO,
       });
+
+      usuarioRepoMock.findExternoByEmail.mockResolvedValue(usuario);
 
       await expect(
         authExternalService.login({
@@ -112,12 +128,17 @@ describe('Auth Services (External & Internal Mock)', () => {
 
     it('debe rechazar login si la contraseña es incorrecta (401)', async () => {
       const passwordHash = await bcrypt.hash('CorrectPassword!', 10);
-      prismaMock.usuarioExterno.findUnique.mockResolvedValue({
+      const usuario = new UsuarioExterno({
         id: 'ext-1',
         email: 'user@test.com',
+        nombre: 'Usuario Test',
         passwordHash,
+        documento: '123',
+        organizacion: 'Empresa Test S.A.',
         estado: EstadoUsuarioExterno.ACTIVO,
       });
+
+      usuarioRepoMock.findExternoByEmail.mockResolvedValue(usuario);
 
       await expect(
         authExternalService.login({
@@ -130,14 +151,16 @@ describe('Auth Services (External & Internal Mock)', () => {
 
   describe('AuthInternalService', () => {
     it('debe generar token mock con claims de Azure Entra ID para desarrollo local', async () => {
-      prismaMock.usuarioInterno.findFirst.mockResolvedValue({
-        id: 'int-op-1',
-        nombre: 'Operador Compras',
-        email: 'operador.compras@bpm.local',
-        rol: RolInterno.OPERADOR,
-        areaId: 'area-compras-id',
-        activo: true,
-      });
+      usuarioRepoMock.findInternoByRol.mockResolvedValue(
+        new UsuarioInterno({
+          id: 'int-op-1',
+          nombre: 'Operador Compras',
+          email: 'operador.compras@bpm.local',
+          rol: RolInterno.OPERADOR,
+          areaId: 'area-compras-id',
+          activo: true,
+        }),
+      );
 
       const res = await authInternalService.loginMock({
         rol: RolInterno.OPERADOR,

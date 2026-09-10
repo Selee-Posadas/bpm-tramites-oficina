@@ -8,6 +8,8 @@ export interface TramiteFiltros {
   origen?: OrigenTramite;
   prioridad?: PrioridadTramite;
   areaActualId?: string;
+  areaId?: string;
+  tipoTramiteId?: string;
   usuarioAsignadoId?: string;
   usuarioExternoId?: string;
   creadoPorId?: string;

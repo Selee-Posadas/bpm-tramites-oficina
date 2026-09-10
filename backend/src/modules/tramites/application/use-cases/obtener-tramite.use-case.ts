@@ -1,27 +1,23 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Tramite } from '../../domain/entities/tramite.entity';
+import { ComentarioTramite } from '../../domain/entities/comentario-tramite.entity';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
 import { ITipoTramiteRepository, TIPO_TRAMITE_REPOSITORY_TOKEN } from '../../../tipos-tramite/domain/repositories/tipo-tramite.repository.interface';
-import { SlaCalculatorService } from '../../domain/services/sla-calculator.service';
+import { TipoTramite } from '../../../tipos-tramite/domain/entities/tipo-tramite.entity';
+import { SlaCalculatorService, SlaInfo } from '../../domain/services/sla-calculator.service';
 import {
   EntityNotFoundException,
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TramiteResponseMapper,
-  TramiteDetalleResponseDto,
-  MovimientoResponseDto,
-  DocumentoResponseDto,
-  ComentarioResponseDto,
-} from '../mappers/tramite-response.mapper';
 
-export {
-  TramiteDetalleResponseDto,
-  MovimientoResponseDto,
-  DocumentoResponseDto,
-  ComentarioResponseDto,
-};
+export interface TramiteDetalleModel {
+  tramite: Tramite;
+  tipoTramite: TipoTramite | null;
+  slaInfo: SlaInfo;
+  comentariosVisibles: readonly ComentarioTramite[];
+}
 
 export interface ObtenerTramiteQuery {
   tramiteId: string;
@@ -40,7 +36,7 @@ export class ObtenerTramiteUseCase {
     private readonly tipoTramiteRepository: ITipoTramiteRepository,
   ) {}
 
-  async execute(query: ObtenerTramiteQuery): Promise<TramiteDetalleResponseDto> {
+  async execute(query: ObtenerTramiteQuery): Promise<TramiteDetalleModel> {
     const tramite = await this.tramiteRepository.findById(query.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', query.tramiteId);
@@ -58,7 +54,7 @@ export class ObtenerTramiteUseCase {
 
     if (
       query.usuarioTipo === TipoUsuario.INTERNO &&
-      query.rolInterno === RolInterno.OPERADOR &&
+      (query.rolInterno === RolInterno.OPERADOR || query.rolInterno === RolInterno.SUPERVISOR) &&
       query.areaUsuarioId &&
       tramite.areaActualId &&
       query.areaUsuarioId !== tramite.areaActualId
@@ -75,6 +71,11 @@ export class ObtenerTramiteUseCase {
         ? tramite.comentarios.filter((c) => c.esVisibleParaExterno())
         : tramite.comentarios;
 
-    return TramiteResponseMapper.toDetalleDto(tramite, tipoTramite, slaInfo, comentariosVisibles);
+    return {
+      tramite,
+      tipoTramite,
+      slaInfo,
+      comentariosVisibles,
+    };
   }
 }

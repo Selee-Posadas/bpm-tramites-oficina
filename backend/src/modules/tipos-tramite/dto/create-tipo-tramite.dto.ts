@@ -25,7 +25,7 @@ export class CreateTipoTramiteDto {
   @IsPositive()
   slaHoras!: number;
 
-  @IsUUID()
+  @IsUUID('all')
   @IsNotEmpty()
   areaInicialId!: string;
 

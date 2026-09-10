@@ -13,13 +13,7 @@ import {
   EntityNotFoundException,
   BusinessRuleValidationException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-
-import {
-  TramiteResponseMapper,
-  TramiteCreadoResponseDto,
-} from '../mappers/tramite-response.mapper';
-
-export { TramiteCreadoResponseDto };
+import * as crypto from 'crypto';
 
 export interface CrearTramiteCommand {
   tipoTramiteId: string;
@@ -30,6 +24,7 @@ export interface CrearTramiteCommand {
   usuarioExternoId?: string;
   usuarioTipo: TipoUsuario;
   usuarioId: string;
+  website?: string;
 }
 
 @Injectable()
@@ -43,7 +38,11 @@ export class CrearTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: CrearTramiteCommand): Promise<TramiteCreadoResponseDto> {
+  async execute(command: CrearTramiteCommand): Promise<Tramite> {
+    if (command.website && command.website.trim() !== '') {
+      throw new BusinessRuleValidationException('Petición rechazada por detección de bot');
+    }
+
     const tipoTramite = await this.tipoTramiteRepository.findById(command.tipoTramiteId);
     if (!tipoTramite) {
       throw new EntityNotFoundException('Tipo de trámite', command.tipoTramiteId);
@@ -121,9 +120,9 @@ export class CrearTramiteUseCase {
       fecha: new Date(),
     });
 
-    await this.movimientoRepository.save(movimientoInicial);
     const saved = await this.tramiteRepository.save(tramite);
+    await this.movimientoRepository.save(movimientoInicial);
 
-    return TramiteResponseMapper.toCreadoDto(saved);
+    return saved;
   }
 }

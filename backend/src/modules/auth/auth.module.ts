@@ -1,7 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
 import { AuthExternalService } from './application/auth-external.service';
 import { AuthInternalService } from './application/auth-internal.service';
 import { AuthController } from './infrastructure/controllers/auth.controller';
@@ -10,10 +9,15 @@ import { InternalAuthGuard } from './infrastructure/guards/internal-auth.guard';
 import { RolesGuard } from './infrastructure/guards/roles.guard';
 import { TramiteOwnershipGuard } from './infrastructure/guards/tramite-ownership.guard';
 import { AnyAuthGuard } from './infrastructure/guards/any-auth.guard';
+import { UsuariosModule } from '../usuarios/usuarios.module';
+import { AreasModule } from '../areas/areas.module';
+import { TramitesModule } from '../tramites/tramites.module';
 
 @Module({
   imports: [
-    PrismaModule,
+    forwardRef(() => UsuariosModule),
+    forwardRef(() => AreasModule),
+    forwardRef(() => TramitesModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

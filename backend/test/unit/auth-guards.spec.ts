@@ -178,27 +178,25 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
   });
 
   describe('TramiteOwnershipGuard', () => {
-    let prismaMock: any;
+    let tramiteRepoMock: any;
     let guard: TramiteOwnershipGuard;
 
     beforeEach(() => {
-      prismaMock = {
-        tramite: {
-          findUnique: jest.fn(),
-        },
+      tramiteRepoMock = {
+        findById: jest.fn(),
       };
-      guard = new TramiteOwnershipGuard(prismaMock);
+      guard = new TramiteOwnershipGuard(tramiteRepoMock);
     });
 
     it('debe permitir acceso transparente si el usuario es de tipo INTERNO', async () => {
       const context = createMockContext({}, { id: 't-1' }, { tipo: TipoUsuario.INTERNO, id: 'user-int' });
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
-      expect(prismaMock.tramite.findUnique).not.toHaveBeenCalled();
+      expect(tramiteRepoMock.findById).not.toHaveBeenCalled();
     });
 
     it('debe arrojar 404 NotFoundException con mensaje opaco si el trámite no existe', async () => {
-      prismaMock.tramite.findUnique.mockResolvedValue(null);
+      tramiteRepoMock.findById.mockResolvedValue(null);
       const context = createMockContext({}, { id: 't-inexistente' }, { tipo: TipoUsuario.EXTERNO, id: 'user-ext' });
 
       try {
@@ -211,7 +209,7 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
     });
 
     it('debe arrojar 403 ForbiddenException con mensaje opaco si el usuario externo intenta acceder a un trámite ajeno', async () => {
-      prismaMock.tramite.findUnique.mockResolvedValue({
+      tramiteRepoMock.findById.mockResolvedValue({
         id: 't-1',
         usuarioExternoId: 'otro-usuario',
         creadoPorId: 'otro-usuario',
@@ -228,7 +226,7 @@ describe('Auth Guards & Ownership (Security Hardened)', () => {
     });
 
     it('debe permitir el acceso si el usuario externo es el propietario del trámite', async () => {
-      prismaMock.tramite.findUnique.mockResolvedValue({
+      tramiteRepoMock.findById.mockResolvedValue({
         id: 't-1',
         usuarioExternoId: 'mi-usuario',
         creadoPorId: 'mi-usuario',

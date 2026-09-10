@@ -5,10 +5,6 @@ import {
 } from '../../domain/repositories/area.repository.interface';
 import { Area } from '../../domain/entities/area.entity';
 import { DuplicateEntityException } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  AreaResponseMapper,
-  AreaResponseDto,
-} from '../mappers/area-response.mapper';
 import * as crypto from 'crypto';
 
 export interface CrearAreaCommand {
@@ -24,7 +20,7 @@ export class CrearAreaUseCase {
     private readonly areaRepository: IAreaRepository,
   ) {}
 
-  async execute(command: CrearAreaCommand): Promise<AreaResponseDto> {
+  async execute(command: CrearAreaCommand): Promise<Area> {
     const existing = await this.areaRepository.findByCodigo(command.codigo);
     if (existing) {
       throw new DuplicateEntityException('Área', 'código', command.codigo);
@@ -38,7 +34,6 @@ export class CrearAreaUseCase {
       fechaCreacion: new Date(),
     });
 
-    const saved = await this.areaRepository.save(area);
-    return AreaResponseMapper.toResponseDto(saved);
+    return await this.areaRepository.save(area);
   }
 }

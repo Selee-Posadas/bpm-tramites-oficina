@@ -9,8 +9,6 @@ import {
   EntityNotFoundException,
   BusinessRuleValidationException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
 
 export interface DerivarTramiteCommand {
@@ -31,7 +29,7 @@ export class DerivarTramiteUseCase {
     private readonly areaRepository: IAreaRepository,
   ) {}
 
-  async execute(command: DerivarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: DerivarTramiteCommand): Promise<Tramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -39,13 +37,11 @@ export class DerivarTramiteUseCase {
 
     const areaDestino = await this.areaRepository.findById(command.areaDestinoId);
     if (!areaDestino) {
-      throw new EntityNotFoundException('Área Destino', command.areaDestinoId);
+      throw new EntityNotFoundException('Área de destino', command.areaDestinoId);
     }
+
     if (!areaDestino.activa) {
-      throw new BusinessRuleValidationException('El área destino se encuentra inactiva');
-    }
-    if (tramite.areaActualId === command.areaDestinoId) {
-      throw new BusinessRuleValidationException('El trámite ya se encuentra actualmente en esa área');
+      throw new BusinessRuleValidationException('El área de destino no se encuentra activa');
     }
 
     const contextWithDestination: WorkflowContext = {
@@ -62,7 +58,6 @@ export class DerivarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toTransitionDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

@@ -21,7 +21,7 @@ export class UpdateTipoTramiteDto {
   @IsOptional()
   slaHoras?: number;
 
-  @IsUUID()
+  @IsUUID('all')
   @IsOptional()
   areaInicialId?: string;
 

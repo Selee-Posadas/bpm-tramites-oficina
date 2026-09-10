@@ -24,12 +24,12 @@ export class UsuarioMapper {
     });
   }
 
-  static toPersistenceInterno(entity: UsuarioInterno, passwordHash?: string | null): PrismaUsuarioInterno {
+  static toPersistenceInterno(entity: UsuarioInterno): PrismaUsuarioInterno {
     return {
       id: entity.id,
       nombre: entity.nombre,
       email: entity.email,
-      passwordHash: passwordHash || null,
+      passwordHash: null,
       areaId: entity.areaId,
       rol: entity.rol as unknown as PrismaRolInterno,
       azureObjectId: entity.azureObjectId || null,
@@ -44,6 +44,7 @@ export class UsuarioMapper {
       id: raw.id,
       nombre: raw.nombre,
       email: raw.email,
+      passwordHash: raw.passwordHash,
       documento: raw.documento,
       organizacion: raw.organizacion,
       estado: raw.estado as unknown as EstadoUsuarioExterno,
@@ -52,12 +53,12 @@ export class UsuarioMapper {
     });
   }
 
-  static toPersistenceExterno(entity: UsuarioExterno, passwordHash: string): PrismaUsuarioExterno {
+  static toPersistenceExterno(entity: UsuarioExterno): PrismaUsuarioExterno {
     return {
       id: entity.id,
       nombre: entity.nombre,
       email: entity.email,
-      passwordHash,
+      passwordHash: entity.passwordHash ?? '',
       documento: entity.documento,
       organizacion: entity.organizacion,
       estado: entity.estado as unknown as PrismaEstadoUsuarioExterno,

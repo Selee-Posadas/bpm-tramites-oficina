@@ -1,14 +1,18 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   NotFoundException,
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { TipoUsuario } from '../../../tramites/domain/enums/tipo-usuario.enum';
 import { FastifyAuthRequest } from '../interfaces/auth-request.interface';
+import {
+  ITramiteRepository,
+  TRAMITE_REPOSITORY_TOKEN,
+} from '../../../tramites/domain/repositories/tramite.repository.interface';
 
 interface TramiteRouteParams {
   id?: string;
@@ -19,7 +23,10 @@ interface TramiteRouteParams {
 export class TramiteOwnershipGuard implements CanActivate {
   private readonly logger = new Logger(TramiteOwnershipGuard.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(TRAMITE_REPOSITORY_TOKEN)
+    private readonly tramiteRepository: ITramiteRepository,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<FastifyAuthRequest<{ Params: TramiteRouteParams }>>();
@@ -42,14 +49,7 @@ export class TramiteOwnershipGuard implements CanActivate {
       return true;
     }
 
-    const tramite = await this.prisma.tramite.findUnique({
-      where: { id: tramiteId },
-      select: {
-        id: true,
-        usuarioExternoId: true,
-        creadoPorId: true,
-      },
-    });
+    const tramite = await this.tramiteRepository.findById(tramiteId);
 
     if (!tramite) {
       this.logger.warn(

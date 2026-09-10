@@ -14,6 +14,7 @@ export interface DashboardStatsDto {
   porOrigen: Record<string, number>;
   porArea: Array<{ areaId: string; cantidad: number }>;
   sla: Record<SlaStatus, number>;
+  porPrioridad: Record<string, number>;
   total: number;
 }
 
@@ -44,10 +45,20 @@ export class ObtenerEstadisticasDashboardUseCase {
       [SlaStatus.FINALIZADO]: 0,
     };
 
+    const porPrioridad: Record<string, number> = {
+      BAJA: 0,
+      MEDIA: 0,
+      ALTA: 0,
+      URGENTE: 0,
+    };
+
     allActive.tramites.forEach((t) => {
       const slaHoras = tiposMap.get(t.tipoTramiteId) || 24;
       const slaInfo = SlaCalculatorService.calcularSla(t, slaHoras);
       slaCounts[slaInfo.estadoSla]++;
+      if (t.prioridad) {
+        porPrioridad[t.prioridad] = (porPrioridad[t.prioridad] || 0) + 1;
+      }
     });
 
     return {
@@ -55,6 +66,7 @@ export class ObtenerEstadisticasDashboardUseCase {
       porOrigen,
       porArea,
       sla: slaCounts,
+      porPrioridad,
       total: allActive.total,
     };
   }

@@ -3,18 +3,13 @@ import {
   ITramiteRepository,
   TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/tramite.repository.interface';
+import { Tramite } from '../../domain/entities/tramite.entity';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import { PrioridadTramite } from '../../domain/enums/prioridad-tramite.enum';
 import {
   EntityNotFoundException,
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TramiteResponseMapper,
-  ModificarBorradorResponseDto,
-} from '../mappers/tramite-response.mapper';
-
-export { ModificarBorradorResponseDto };
 
 export interface ModificarBorradorCommand {
   tramiteId: string;
@@ -32,7 +27,7 @@ export class ModificarBorradorUseCase {
     private readonly tramiteRepository: ITramiteRepository,
   ) {}
 
-  async execute(command: ModificarBorradorCommand): Promise<ModificarBorradorResponseDto> {
+  async execute(command: ModificarBorradorCommand): Promise<Tramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -53,7 +48,6 @@ export class ModificarBorradorUseCase {
       command.prioridad ?? tramite.prioridad,
     );
 
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toModificadoDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

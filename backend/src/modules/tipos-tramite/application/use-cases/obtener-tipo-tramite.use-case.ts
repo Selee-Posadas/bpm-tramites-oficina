@@ -3,11 +3,8 @@ import {
   ITipoTramiteRepository,
   TIPO_TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/tipo-tramite.repository.interface';
+import { TipoTramite } from '../../domain/entities/tipo-tramite.entity';
 import { EntityNotFoundException } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TipoTramiteResponseMapper,
-  TipoTramiteResponseDto,
-} from '../mappers/tipo-tramite-response.mapper';
 
 @Injectable()
 export class ObtenerTipoTramiteUseCase {
@@ -16,11 +13,11 @@ export class ObtenerTipoTramiteUseCase {
     private readonly tipoTramiteRepository: ITipoTramiteRepository,
   ) {}
 
-  async execute(id: string): Promise<TipoTramiteResponseDto> {
+  async execute(id: string): Promise<TipoTramite> {
     const tipo = await this.tipoTramiteRepository.findById(id);
     if (!tipo) {
       throw new EntityNotFoundException('Tipo de trámite', id);
     }
-    return TipoTramiteResponseMapper.toResponseDto(tipo);
+    return tipo;
   }
 }

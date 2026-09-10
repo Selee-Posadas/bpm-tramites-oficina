@@ -29,7 +29,7 @@ async function main() {
 
   const areaMesa = await prisma.area.create({
     data: {
-      id: '11111111-1111-1111-1111-111111111111',
+      id: '11111111-1111-1111-8111-111111111111',
       nombre: 'Mesa de Entradas',
       codigo: 'MESA-ENT',
       activa: true,
@@ -38,7 +38,7 @@ async function main() {
 
   const areaCompras = await prisma.area.create({
     data: {
-      id: '22222222-2222-2222-2222-222222222222',
+      id: '22222222-2222-2222-8222-222222222222',
       nombre: 'Compras y Contrataciones',
       codigo: 'COMPRAS',
       activa: true,
@@ -47,7 +47,7 @@ async function main() {
 
   const areaLegales = await prisma.area.create({
     data: {
-      id: '33333333-3333-3333-3333-333333333333',
+      id: '33333333-3333-3333-8333-333333333333',
       nombre: 'Asuntos Legales',
       codigo: 'LEGALES',
       activa: true,
@@ -60,7 +60,7 @@ async function main() {
 
   const userAdmin = await prisma.usuarioInterno.create({
     data: {
-      id: 'a1111111-1111-1111-1111-111111111111',
+      id: 'a1111111-1111-1111-8111-111111111111',
       nombre: 'Carlos Administrador',
       email: 'admin@bpm.local',
       passwordHash,
@@ -72,7 +72,7 @@ async function main() {
 
   const userMesa = await prisma.usuarioInterno.create({
     data: {
-      id: 'a2222222-2222-2222-2222-222222222222',
+      id: 'a2222222-2222-2222-8222-222222222222',
       nombre: 'María Mesa de Entrada',
       email: 'mesa@bpm.local',
       passwordHash,
@@ -84,7 +84,7 @@ async function main() {
 
   const userOperadorCompras = await prisma.usuarioInterno.create({
     data: {
-      id: 'a3333333-3333-3333-3333-333333333333',
+      id: 'a3333333-3333-3333-8333-333333333333',
       nombre: 'Juan Operador Compras',
       email: 'operador.compras@bpm.local',
       passwordHash,
@@ -96,7 +96,7 @@ async function main() {
 
   const userOperadorLegales = await prisma.usuarioInterno.create({
     data: {
-      id: 'a4444444-4444-4444-4444-444444444444',
+      id: 'a4444444-4444-4444-8444-444444444444',
       nombre: 'Laura Operador Legales',
       email: 'operador.legales@bpm.local',
       passwordHash,
@@ -108,7 +108,7 @@ async function main() {
 
   const userSupervisor = await prisma.usuarioInterno.create({
     data: {
-      id: 'a5555555-5555-5555-5555-555555555555',
+      id: 'a5555555-5555-5555-8555-555555555555',
       nombre: 'Roberto Supervisor Compras',
       email: 'supervisor@bpm.local',
       passwordHash,
@@ -120,7 +120,7 @@ async function main() {
 
   const userAuditor = await prisma.usuarioInterno.create({
     data: {
-      id: 'a6666666-6666-6666-6666-666666666666',
+      id: 'a6666666-6666-6666-8666-666666666666',
       nombre: 'Ana Auditora General',
       email: 'auditor@bpm.local',
       passwordHash,
@@ -134,7 +134,7 @@ async function main() {
 
   const userExtAcme = await prisma.usuarioExterno.create({
     data: {
-      id: 'e1111111-1111-1111-1111-111111111111',
+      id: 'e1111111-1111-1111-8111-111111111111',
       nombre: 'Acme Corporation S.A.',
       email: 'proveedor1@externo.local',
       passwordHash,
@@ -146,7 +146,7 @@ async function main() {
 
   const userExtTech = await prisma.usuarioExterno.create({
     data: {
-      id: 'e2222222-2222-2222-2222-222222222222',
+      id: 'e2222222-2222-2222-8222-222222222222',
       nombre: 'Soluciones Tecnológicas S.R.L.',
       email: 'proveedor2@externo.local',
       passwordHash,
@@ -158,7 +158,7 @@ async function main() {
 
   const userExtCiudadano = await prisma.usuarioExterno.create({
     data: {
-      id: 'e3333333-3333-3333-3333-333333333333',
+      id: 'e3333333-3333-3333-8333-333333333333',
       nombre: 'Juan Ciudadano Pérez',
       email: 'ciudadano@externo.local',
       passwordHash,
@@ -172,7 +172,7 @@ async function main() {
 
   const tipoAltaProv = await prisma.tipoTramite.create({
     data: {
-      id: 'b1111111-1111-1111-1111-111111111111',
+      id: 'b1111111-1111-1111-8111-111111111111',
       codigo: 'ALTA-PROV',
       nombre: 'Alta de Proveedor en Padrón',
       descripcion: 'Procedimiento para homologación e inscripción de proveedores oficiales',
@@ -186,7 +186,7 @@ async function main() {
 
   const tipoDictamen = await prisma.tipoTramite.create({
     data: {
-      id: 'b2222222-2222-2222-2222-222222222222',
+      id: 'b2222222-2222-2222-8222-222222222222',
       codigo: 'DICT-JUR',
       nombre: 'Dictamen Jurídico y Normativo',
       descripcion: 'Consulta legal interna sobre pliegos, contratos o convenios institucionales',
@@ -200,7 +200,7 @@ async function main() {
 
   const tipoPagoFactura = await prisma.tipoTramite.create({
     data: {
-      id: 'b3333333-3333-3333-3333-333333333333',
+      id: 'b3333333-3333-3333-8333-333333333333',
       codigo: 'SOL-PAGO',
       nombre: 'Solicitud de Pago y Facturación',
       descripcion: 'Trámite interno que requiere validación o subsanación de factura por parte del contratista externo',
@@ -214,7 +214,7 @@ async function main() {
 
   const tipoReclamo = await prisma.tipoTramite.create({
     data: {
-      id: 'b4444444-4444-4444-4444-444444444444',
+      id: 'b4444444-4444-4444-8444-444444444444',
       codigo: 'REC-ADM',
       nombre: 'Reclamo Administrativo Ciudadano',
       descripcion: 'Presentación formal de reclamos ante la Mesa General de Entradas',
@@ -235,7 +235,7 @@ async function main() {
 
   const t1 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000001',
+      id: '00000000-0000-4000-8000-000000000001',
       numero: 'TRM-2025-0001',
       tipoTramiteId: tipoAltaProv.id,
       titulo: 'Inscripción Padrón Proveedores de Equipamiento IT',
@@ -253,7 +253,7 @@ async function main() {
 
   const t2 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000002',
+      id: '00000000-0000-4000-8000-000000000002',
       numero: 'TRM-2025-0002',
       tipoTramiteId: tipoAltaProv.id,
       titulo: 'Inscripción Proveedor de Insumos Médicos',
@@ -285,7 +285,7 @@ async function main() {
 
   const t3 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000003',
+      id: '00000000-0000-4000-8000-000000000003',
       numero: 'TRM-2025-0003',
       tipoTramiteId: tipoAltaProv.id,
       titulo: 'Renovación Anual Proveedor de Librería y Papelería',
@@ -318,7 +318,7 @@ async function main() {
 
   const t4 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000004',
+      id: '00000000-0000-4000-8000-000000000004',
       numero: 'TRM-2025-0004',
       tipoTramiteId: tipoAltaProv.id,
       titulo: 'Alta Proveedor Servicios de Seguridad y Vigilancia',
@@ -361,7 +361,7 @@ async function main() {
 
   const t5 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000005',
+      id: '00000000-0000-4000-8000-000000000005',
       numero: 'TRM-2025-0005',
       tipoTramiteId: tipoDictamen.id,
       titulo: 'Dictamen de Pliego Licitación Pública 04/2025',
@@ -392,7 +392,7 @@ async function main() {
 
   const t6 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000006',
+      id: '00000000-0000-4000-8000-000000000006',
       numero: 'TRM-2025-0006',
       tipoTramiteId: tipoPagoFactura.id,
       titulo: 'Aclaración de Factura B-0001-00004523 Contrato Redes',
@@ -425,7 +425,7 @@ async function main() {
 
   const t7 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000007',
+      id: '00000000-0000-4000-8000-000000000007',
       numero: 'TRM-2025-0007',
       tipoTramiteId: tipoPagoFactura.id,
       titulo: 'Subsanación Comprobante Pago de Servicios Cloud',
@@ -458,7 +458,7 @@ async function main() {
 
   const t8 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000008',
+      id: '00000000-0000-4000-8000-000000000008',
       numero: 'TRM-2025-0008',
       tipoTramiteId: tipoAltaProv.id,
       titulo: 'Alta Proveedor Servicios de Catering y Eventos',
@@ -491,7 +491,7 @@ async function main() {
 
   const t9 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000009',
+      id: '00000000-0000-4000-8000-000000000009',
       numero: 'TRM-2025-0009',
       tipoTramiteId: tipoDictamen.id,
       titulo: 'Consulta de Excepción a la Ley de Contrataciones',
@@ -523,7 +523,7 @@ async function main() {
 
   const t10 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000010',
+      id: '00000000-0000-4000-8000-000000000010',
       numero: 'TRM-2025-0010',
       tipoTramiteId: tipoReclamo.id,
       titulo: 'Reclamo por Atención en Mesa General N° 1204',
@@ -557,7 +557,7 @@ async function main() {
 
   const t11 = await prisma.tramite.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000011',
+      id: '00000000-0000-4000-8000-000000000011',
       numero: 'TRM-2025-0011',
       tipoTramiteId: tipoReclamo.id,
       titulo: 'Reclamo Urgente por Inconsistencia de Datos en Certificado',

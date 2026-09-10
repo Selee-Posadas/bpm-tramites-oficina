@@ -20,6 +20,7 @@ import { InternalAuthGuard } from '../../../auth/infrastructure/guards/internal-
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
+import { TipoTramiteResponseMapper } from '../../application/mappers/tipo-tramite-response.mapper';
 
 @Controller('tipos-tramite')
 export class TiposTramiteController {
@@ -33,12 +34,14 @@ export class TiposTramiteController {
   @Get()
   async findAll(@Query('soloActivos') soloActivos?: string) {
     const activos = soloActivos === 'false' ? false : true;
-    return await this.listarTiposTramiteUseCase.execute(activos);
+    const tipos = await this.listarTiposTramiteUseCase.execute(activos);
+    return TipoTramiteResponseMapper.toListResponseDto(tipos);
   }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    return await this.obtenerTipoTramiteUseCase.execute(id);
+    const tipo = await this.obtenerTipoTramiteUseCase.execute(id);
+    return TipoTramiteResponseMapper.toResponseDto(tipo);
   }
 
   @Post()
@@ -46,7 +49,7 @@ export class TiposTramiteController {
   @Roles(RolInterno.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateTipoTramiteDto) {
-    return await this.crearTipoTramiteUseCase.execute({
+    const tipo = await this.crearTipoTramiteUseCase.execute({
       codigo: dto.codigo,
       nombre: dto.nombre,
       descripcion: dto.descripcion,
@@ -56,16 +59,18 @@ export class TiposTramiteController {
       permiteInicioExterno: dto.permiteInicioExterno,
       activo: dto.activo,
     });
+    return TipoTramiteResponseMapper.toResponseDto(tipo);
   }
 
   @Put(':id')
   @UseGuards(InternalAuthGuard, RolesGuard)
   @Roles(RolInterno.ADMIN)
   async update(@Param('id') id: string, @Body() dto: UpdateTipoTramiteDto) {
-    return await this.actualizarTipoTramiteUseCase.execute({
+    const tipo = await this.actualizarTipoTramiteUseCase.execute({
       id,
       slaHoras: dto.slaHoras,
       activo: dto.activo,
     });
+    return TipoTramiteResponseMapper.toResponseDto(tipo);
   }
 }

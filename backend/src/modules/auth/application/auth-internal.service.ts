@@ -1,58 +1,71 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
+import * as crypto from 'crypto';
 import { LoginInternalMockDto } from '../dto/login-internal-mock.dto';
 import { TipoUsuario } from '../../tramites/domain/enums/tipo-usuario.enum';
 import { RolInterno } from '../../usuarios/domain/enums/rol-interno.enum';
 import { AuthenticatedUser } from '../domain/auth-user.interface';
 import { AuthTokenResponse } from './auth-external.service';
+import {
+  IUsuarioRepository,
+  USUARIO_REPOSITORY_TOKEN,
+} from '../../usuarios/domain/repositories/usuario.repository.interface';
+import {
+  IAreaRepository,
+  AREA_REPOSITORY_TOKEN,
+} from '../../areas/domain/repositories/area.repository.interface';
+import { UsuarioInterno } from '../../usuarios/domain/entities/usuario-interno.entity';
+import { Area } from '../../areas/domain/entities/area.entity';
 
 @Injectable()
 export class AuthInternalService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(USUARIO_REPOSITORY_TOKEN)
+    private readonly usuarioRepository: IUsuarioRepository,
+    @Inject(AREA_REPOSITORY_TOKEN)
+    private readonly areaRepository: IAreaRepository,
     private readonly jwtService: JwtService,
   ) {}
 
   async loginMock(dto: LoginInternalMockDto): Promise<AuthTokenResponse> {
-    let user = null;
+    let user: UsuarioInterno | null = null;
 
     if (dto.email) {
-      user = await this.prisma.usuarioInterno.findUnique({
-        where: { email: dto.email.toLowerCase() },
-        include: { area: true },
-      });
+      user = await this.usuarioRepository.findInternoByEmail(dto.email.toLowerCase());
+    }
+
+    if (!user && dto.rol) {
+      user = await this.usuarioRepository.findInternoByRol(dto.rol);
     }
 
     if (!user) {
-      user = await this.prisma.usuarioInterno.findFirst({
-        where: { rol: dto.rol as unknown as RolInterno, activo: true },
-        include: { area: true },
-      });
-    }
+      let areas = await this.areaRepository.findAll(true);
+      let area: Area | null = areas.length > 0 ? areas[0] : null;
 
-    if (!user) {
-      let area = await this.prisma.area.findFirst();
       if (!area) {
-        area = await this.prisma.area.create({
-          data: {
-            nombre: 'Mesa General',
-            codigo: 'MESA-GEN',
-            activa: true,
-          },
+        const nuevaArea = new Area({
+          id: crypto.randomUUID(),
+          nombre: 'Mesa General',
+          codigo: 'MESA-GEN',
+          activa: true,
+          fechaCreacion: new Date(),
         });
+        area = await this.areaRepository.save(nuevaArea);
       }
 
-      user = await this.prisma.usuarioInterno.create({
-        data: {
-          nombre: `Usuario ${dto.rol}`,
-          email: `${dto.rol.toLowerCase()}@bpm.local`,
-          rol: dto.rol as unknown as RolInterno,
-          areaId: area.id,
-          activo: true,
-        },
-        include: { area: true },
+      const rol = dto.rol ?? RolInterno.OPERADOR;
+      const nuevoUsuario = new UsuarioInterno({
+        id: crypto.randomUUID(),
+        nombre: `Usuario ${rol}`,
+        email: `${rol.toLowerCase()}@bpm.local`,
+        rol,
+        areaId: area.id,
+        activo: true,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date(),
       });
+
+      user = await this.usuarioRepository.saveInterno(nuevoUsuario);
     }
 
     const authUser: AuthenticatedUser = {
@@ -60,7 +73,7 @@ export class AuthInternalService {
       email: user.email,
       nombre: user.nombre,
       tipo: TipoUsuario.INTERNO,
-      rolInterno: user.rol as unknown as RolInterno,
+      rolInterno: user.rol,
       areaId: user.areaId,
     };
 
@@ -80,10 +93,7 @@ export class AuthInternalService {
   }
 
   async getInternalMe(userId: string): Promise<AuthenticatedUser> {
-    const user = await this.prisma.usuarioInterno.findUnique({
-      where: { id: userId },
-      include: { area: true },
-    });
+    const user = await this.usuarioRepository.findInternoById(userId);
 
     if (!user) {
       throw new NotFoundException('Usuario interno no encontrado');
@@ -94,7 +104,7 @@ export class AuthInternalService {
       email: user.email,
       nombre: user.nombre,
       tipo: TipoUsuario.INTERNO,
-      rolInterno: user.rol as unknown as RolInterno,
+      rolInterno: user.rol,
       areaId: user.areaId,
     };
   }

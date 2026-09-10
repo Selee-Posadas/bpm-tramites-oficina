@@ -1,15 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ComentarioTramite } from '../../domain/entities/comentario-tramite.entity';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import {
   IComentarioTramiteRepository,
   COMENTARIO_TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/comentario-tramite.repository.interface';
-import {
-  TramiteResponseMapper,
-  ComentarioResponseDto,
-} from '../mappers/tramite-response.mapper';
-
-export { ComentarioResponseDto };
 
 export interface ListarComentariosQuery {
   tramiteId: string;
@@ -23,13 +18,11 @@ export class ListarComentariosUseCase {
     private readonly comentarioRepository: IComentarioTramiteRepository,
   ) {}
 
-  async execute(query: ListarComentariosQuery): Promise<ComentarioResponseDto[]> {
-    const soloVisiblesParaExterno = query.usuarioTipo === TipoUsuario.EXTERNO;
-    const comentarios = await this.comentarioRepository.findByTramiteId(
+  async execute(query: ListarComentariosQuery): Promise<ComentarioTramite[]> {
+    const soloVisiblesExterno = query.usuarioTipo === TipoUsuario.EXTERNO;
+    return await this.comentarioRepository.findByTramiteId(
       query.tramiteId,
-      soloVisiblesParaExterno,
+      soloVisiblesExterno,
     );
-
-    return comentarios.map(TramiteResponseMapper.toComentarioDto);
   }
 }

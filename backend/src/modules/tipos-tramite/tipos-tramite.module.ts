@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { TIPO_TRAMITE_REPOSITORY_TOKEN } from './domain/repositories/tipo-tramite.repository.interface';
@@ -10,7 +10,7 @@ import { CrearTipoTramiteUseCase } from './application/use-cases/crear-tipo-tram
 import { ActualizarTipoTramiteUseCase } from './application/use-cases/actualizar-tipo-tramite.use-case';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, forwardRef(() => AuthModule)],
   controllers: [TiposTramiteController],
   providers: [
     {

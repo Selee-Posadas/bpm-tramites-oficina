@@ -57,8 +57,12 @@ export class PrismaTramiteRepository implements ITramiteRepository {
       if (filtros.prioridad) {
         where.prioridad = filtros.prioridad as unknown as PrismaPrioridadTramite;
       }
-      if (filtros.areaActualId) {
-        where.areaActualId = filtros.areaActualId;
+      const areaFiltro = filtros.areaActualId || filtros.areaId;
+      if (areaFiltro) {
+        where.areaActualId = areaFiltro;
+      }
+      if (filtros.tipoTramiteId) {
+        where.tipoTramiteId = filtros.tipoTramiteId;
       }
       if (filtros.usuarioAsignadoId) {
         where.usuarioAsignadoId = filtros.usuarioAsignadoId;

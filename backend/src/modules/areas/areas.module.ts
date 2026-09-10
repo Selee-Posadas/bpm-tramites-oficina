@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { AREA_REPOSITORY_TOKEN } from './domain/repositories/area.repository.interface';
@@ -10,7 +10,7 @@ import { CrearAreaUseCase } from './application/use-cases/crear-area.use-case';
 import { ActualizarAreaUseCase } from './application/use-cases/actualizar-area.use-case';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, forwardRef(() => AuthModule)],
   controllers: [AreasController],
   providers: [
     {

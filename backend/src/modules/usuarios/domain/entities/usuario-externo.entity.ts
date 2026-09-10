@@ -25,6 +25,10 @@ export class UsuarioExterno {
     return this.props.email;
   }
 
+  get passwordHash(): string | undefined {
+    return this.props.passwordHash;
+  }
+
   get documento(): string {
     return this.props.documento;
   }
@@ -54,8 +58,17 @@ export class UsuarioExterno {
     this.props.fechaActualizacion = new Date();
   }
 
-  activar(): void {
-    this.props.estado = EstadoUsuarioExterno.ACTIVO;
+  actualizarPassword(nuevoPasswordHash: string): void {
+    if (!nuevoPasswordHash || nuevoPasswordHash.trim().length === 0) {
+      throw new Error('El hash de contraseña no puede estar vacío');
+    }
+    this.props.passwordHash = nuevoPasswordHash;
     this.props.fechaActualizacion = new Date();
   }
+
+  toJSON(): Omit<UsuarioExternoProps, 'passwordHash'> {
+    const { passwordHash: _hash, ...safeProps } = this.props;
+    return safeProps;
+  }
 }
+

@@ -4,6 +4,7 @@ export interface UsuarioExternoProps {
   id: string;
   nombre: string;
   email: string;
+  passwordHash?: string;
   documento: string;
   organizacion: string;
   estado: EstadoUsuarioExterno;

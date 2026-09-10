@@ -43,6 +43,7 @@ import { CurrentUser } from '../../../auth/infrastructure/decorators/current-use
 import { AuthenticatedUser } from '../../../auth/domain/auth-user.interface';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
+import { TramiteResponseMapper } from '../../application/mappers/tramite-response.mapper';
 
 @Controller('tramites/:id')
 export class WorkflowController {
@@ -80,10 +81,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    return await this.ingresarTramiteUseCase.execute({
+    const tramite = await this.ingresarTramiteUseCase.execute({
       tramiteId: id,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('tomar')
@@ -95,10 +97,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    return await this.tomarTramiteUseCase.execute({
+    const tramite = await this.tomarTramiteUseCase.execute({
       tramiteId: id,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('asignar')
@@ -111,11 +114,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user);
-    return await this.asignarTramiteUseCase.execute({
+    const tramite = await this.asignarTramiteUseCase.execute({
       tramiteId: id,
       nuevoOperadorId: dto.operadorId,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('derivar')
@@ -128,12 +132,13 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo, dto.areaDestinoId);
-    return await this.derivarTramiteUseCase.execute({
+    const tramite = await this.derivarTramiteUseCase.execute({
       tramiteId: id,
       areaDestinoId: dto.areaDestinoId,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('observar')
@@ -146,11 +151,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.observarTramiteUseCase.execute({
+    const tramite = await this.observarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('responder-observacion')
@@ -162,11 +168,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo || dto.respuesta);
-    return await this.responderObservacionUseCase.execute({
+    const tramite = await this.responderObservacionUseCase.execute({
       tramiteId: id,
       respuesta: dto.respuesta,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('solicitar-intervencion-externa')
@@ -179,11 +186,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.solicitarIntervencionExternaUseCase.execute({
+    const tramite = await this.solicitarIntervencionExternaUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('responder-intervencion-externa')
@@ -195,11 +203,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo || dto.respuesta);
-    return await this.responderIntervencionExternaUseCase.execute({
+    const tramite = await this.responderIntervencionExternaUseCase.execute({
       tramiteId: id,
       respuesta: dto.respuesta,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('aprobar')
@@ -212,11 +221,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.aprobarTramiteUseCase.execute({
+    const tramite = await this.aprobarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('rechazar')
@@ -229,11 +239,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.rechazarTramiteUseCase.execute({
+    const tramite = await this.rechazarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('cerrar')
@@ -246,11 +257,12 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.cerrarTramiteUseCase.execute({
+    const tramite = await this.cerrarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 
   @Post('cancelar')
@@ -262,10 +274,11 @@ export class WorkflowController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const contexto = this.createContexto(user, dto.motivo);
-    return await this.cancelarTramiteUseCase.execute({
+    const tramite = await this.cancelarTramiteUseCase.execute({
       tramiteId: id,
       motivo: dto.motivo,
       contexto,
     });
+    return TramiteResponseMapper.toTransitionDto(tramite);
   }
 }

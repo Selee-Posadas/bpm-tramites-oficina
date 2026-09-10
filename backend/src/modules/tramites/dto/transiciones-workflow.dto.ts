@@ -1,13 +1,13 @@
 import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class AsignarTramiteDto {
-  @IsUUID()
+  @IsUUID('all')
   @IsNotEmpty()
   operadorId!: string;
 }
 
 export class DerivarTramiteDto {
-  @IsUUID()
+  @IsUUID('all')
   @IsNotEmpty()
   areaDestinoId!: string;
 

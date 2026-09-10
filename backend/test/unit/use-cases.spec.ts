@@ -10,6 +10,7 @@ import { CerrarTramiteUseCase } from '../../src/modules/tramites/application/use
 import { ListarComentariosUseCase } from '../../src/modules/tramites/application/use-cases/listar-comentarios.use-case';
 import { ModificarBorradorUseCase } from '../../src/modules/tramites/application/use-cases/modificar-borrador.use-case';
 import { EliminarTramiteBorradorUseCase } from '../../src/modules/tramites/application/use-cases/eliminar-tramite-borrador.use-case';
+import { ListarTramitesUseCase } from '../../src/modules/tramites/application/use-cases/listar-tramites.use-case';
 import { IComentarioTramiteRepository } from '../../src/modules/tramites/domain/repositories/comentario-tramite.repository.interface';
 import { ITramiteRepository } from '../../src/modules/tramites/domain/repositories/tramite.repository.interface';
 import { ITipoTramiteRepository } from '../../src/modules/tipos-tramite/domain/repositories/tipo-tramite.repository.interface';
@@ -148,6 +149,25 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
         }),
       ).rejects.toThrow(BusinessRuleValidationException);
     });
+
+    it('debe rechazar la creación si se completa el campo honeypot website (detección de bot)', async () => {
+      const useCase = new CrearTramiteUseCase(
+        tramiteRepoMock,
+        tipoTramiteRepoMock,
+        movimientoRepoMock,
+      );
+
+      await expect(
+        useCase.execute({
+          tipoTramiteId: 'tipo-1',
+          titulo: 'Trámite generado por bot',
+          descripcion: 'Spam automático',
+          usuarioTipo: TipoUsuario.EXTERNO,
+          usuarioId: 'ext-user-1',
+          website: 'http://spam-bot.com',
+        }),
+      ).rejects.toThrow(BusinessRuleValidationException);
+    });
   });
 
   describe('TomarTramiteUseCase', () => {
@@ -241,7 +261,7 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
             usuarioTipo: TipoUsuario.INTERNO,
             usuarioId: 'op-compras',
             rolInterno: RolInterno.OPERADOR,
-            areaUsuarioId: 'area-compras', // Área distinta
+            areaUsuarioId: 'area-compras',
           },
         }),
       ).rejects.toThrow(UnauthorizedActionException);
@@ -509,6 +529,199 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
           usuarioId: 'ext-1',
         }),
       ).rejects.toThrow(BusinessRuleValidationException);
+    });
+  });
+
+  describe('ListarTramitesUseCase', () => {
+    it('debe normalizar areaId hacia areaActualId y listar trámites', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-1',
+        codigo: 'TP-1',
+        nombre: 'Tipo Prueba',
+        descripcion: 'Desc',
+        activo: true,
+        slaHoras: 24,
+        areaInicialId: 'area-1',
+        requiereExterno: false,
+        permiteInicioExterno: true,
+      });
+      tipoTramiteRepoMock.findAll.mockResolvedValue([tipo]);
+
+      const tramite = new Tramite({
+        id: 't-1',
+        numero: 'TRM-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Título',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.BAJA,
+        areaActualId: 'area-1',
+        creadoPorTipo: TipoUsuario.INTERNO,
+        creadoPorId: 'usr-1',
+      });
+      tramiteRepoMock.findAll.mockResolvedValue({ tramites: [tramite], total: 1 });
+
+      const useCase = new ListarTramitesUseCase(tramiteRepoMock, tipoTramiteRepoMock);
+      const res = await useCase.execute({
+        filtros: { areaId: 'area-1' },
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'usr-1',
+      });
+
+      expect(res.total).toBe(1);
+      expect(res.items).toHaveLength(1);
+      expect(res.items[0].id).toBe('t-1');
+      expect(tramiteRepoMock.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ areaActualId: 'area-1' }),
+      );
+    });
+
+    it('debe filtrar exclusivamente trámites vencidos cuando soloVencidos es true', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-1',
+        codigo: 'TP-1',
+        nombre: 'Tipo Prueba',
+        descripcion: 'Desc',
+        activo: true,
+        slaHoras: 1,
+        areaInicialId: 'area-1',
+        requiereExterno: false,
+        permiteInicioExterno: true,
+      });
+      tipoTramiteRepoMock.findAll.mockResolvedValue([tipo]);
+
+      const tramiteVencido = new Tramite({
+        id: 't-vencido',
+        numero: 'TRM-VENCIDO',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Vencido',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.ALTA,
+        fechaCreacion: new Date(Date.now() - 5 * 3600 * 1000),
+        creadoPorTipo: TipoUsuario.INTERNO,
+        creadoPorId: 'usr-1',
+      });
+
+      const tramiteEnTermino = new Tramite({
+        id: 't-vigente',
+        numero: 'TRM-VIGENTE',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Vigente',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.MEDIA,
+        fechaCreacion: new Date(Date.now() - 5 * 60 * 1000),
+        creadoPorTipo: TipoUsuario.INTERNO,
+        creadoPorId: 'usr-1',
+      });
+
+      tramiteRepoMock.findAll.mockResolvedValue({
+        tramites: [tramiteVencido, tramiteEnTermino],
+        total: 2,
+      });
+
+      const useCase = new ListarTramitesUseCase(tramiteRepoMock, tipoTramiteRepoMock);
+      const res = await useCase.execute({
+        filtros: { soloVencidos: true },
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'usr-1',
+      });
+
+      expect(res.total).toBe(1);
+      expect(res.items).toHaveLength(1);
+      expect(res.items[0].id).toBe('t-vencido');
+      expect(res.items[0].sla.estaVencido).toBe(true);
+    });
+
+    it('debe forzar el filtro al área del operador aunque se intente consultar otra área', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-1',
+        codigo: 'TP-1',
+        nombre: 'Tipo Prueba',
+        descripcion: 'Desc',
+        activo: true,
+        slaHoras: 24,
+        areaInicialId: 'area-compras',
+        requiereExterno: false,
+        permiteInicioExterno: true,
+      });
+      tipoTramiteRepoMock.findAll.mockResolvedValue([tipo]);
+      tramiteRepoMock.findAll.mockResolvedValue({ tramites: [], total: 0 });
+
+      const useCase = new ListarTramitesUseCase(tramiteRepoMock, tipoTramiteRepoMock);
+      await useCase.execute({
+        filtros: { areaId: 'area-legales' },
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'op-compras-id',
+        rolInterno: RolInterno.OPERADOR,
+        areaUsuarioId: 'area-compras',
+      });
+
+      expect(tramiteRepoMock.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ areaActualId: 'area-compras' }),
+      );
+    });
+
+    it('debe forzar el filtro al área del supervisor', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-1',
+        codigo: 'TP-1',
+        nombre: 'Tipo Prueba',
+        descripcion: 'Desc',
+        activo: true,
+        slaHoras: 24,
+        areaInicialId: 'area-compras',
+        requiereExterno: false,
+        permiteInicioExterno: true,
+      });
+      tipoTramiteRepoMock.findAll.mockResolvedValue([tipo]);
+      tramiteRepoMock.findAll.mockResolvedValue({ tramites: [], total: 0 });
+
+      const useCase = new ListarTramitesUseCase(tramiteRepoMock, tipoTramiteRepoMock);
+      await useCase.execute({
+        filtros: {},
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'sup-compras-id',
+        rolInterno: RolInterno.SUPERVISOR,
+        areaUsuarioId: 'area-compras',
+      });
+
+      expect(tramiteRepoMock.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ areaActualId: 'area-compras' }),
+      );
+    });
+
+    it('debe permitir a un admin ver todas las áreas si no especifica filtro', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-1',
+        codigo: 'TP-1',
+        nombre: 'Tipo Prueba',
+        descripcion: 'Desc',
+        activo: true,
+        slaHoras: 24,
+        areaInicialId: 'area-compras',
+        requiereExterno: false,
+        permiteInicioExterno: true,
+      });
+      tipoTramiteRepoMock.findAll.mockResolvedValue([tipo]);
+      tramiteRepoMock.findAll.mockResolvedValue({ tramites: [], total: 0 });
+
+      const useCase = new ListarTramitesUseCase(tramiteRepoMock, tipoTramiteRepoMock);
+      await useCase.execute({
+        filtros: {},
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'admin-id',
+        rolInterno: RolInterno.ADMIN,
+        areaUsuarioId: 'area-mesa',
+      });
+
+      expect(tramiteRepoMock.findAll).toHaveBeenCalledWith(
+        expect.not.objectContaining({ areaActualId: expect.anything() }),
+      );
     });
   });
 });

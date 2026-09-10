@@ -3,12 +3,7 @@ import {
   IUsuarioRepository,
   USUARIO_REPOSITORY_TOKEN,
 } from '../../domain/repositories/usuario.repository.interface';
-import {
-  UsuarioResponseMapper,
-  UsuarioInternoResponseDto,
-} from '../mappers/usuario-response.mapper';
-
-export { UsuarioInternoResponseDto };
+import { UsuarioInterno } from '../../domain/entities/usuario-interno.entity';
 
 @Injectable()
 export class ListarUsuariosInternosUseCase {
@@ -17,8 +12,7 @@ export class ListarUsuariosInternosUseCase {
     private readonly usuarioRepository: IUsuarioRepository,
   ) {}
 
-  async execute(areaId?: string): Promise<UsuarioInternoResponseDto[]> {
-    const usuarios = await this.usuarioRepository.findAllInternos(areaId);
-    return UsuarioResponseMapper.toListInternosResponseDto(usuarios);
+  async execute(areaId?: string): Promise<UsuarioInterno[]> {
+    return await this.usuarioRepository.findAllInternos(areaId);
   }
 }

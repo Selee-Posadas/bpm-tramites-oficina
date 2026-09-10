@@ -3,12 +3,7 @@ import {
   ITipoTramiteRepository,
   TIPO_TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/tipo-tramite.repository.interface';
-import {
-  TipoTramiteResponseMapper,
-  TipoTramiteResponseDto,
-} from '../mappers/tipo-tramite-response.mapper';
-
-export { TipoTramiteResponseDto };
+import { TipoTramite } from '../../domain/entities/tipo-tramite.entity';
 
 @Injectable()
 export class ListarTiposTramiteUseCase {
@@ -17,8 +12,7 @@ export class ListarTiposTramiteUseCase {
     private readonly tipoTramiteRepository: ITipoTramiteRepository,
   ) {}
 
-  async execute(soloActivos = true): Promise<TipoTramiteResponseDto[]> {
-    const tipos = await this.tipoTramiteRepository.findAll(soloActivos);
-    return TipoTramiteResponseMapper.toListResponseDto(tipos);
+  async execute(soloActivos = true): Promise<TipoTramite[]> {
+    return await this.tipoTramiteRepository.findAll(soloActivos);
   }
 }

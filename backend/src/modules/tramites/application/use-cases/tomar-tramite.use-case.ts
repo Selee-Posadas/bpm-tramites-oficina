@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
@@ -9,8 +10,6 @@ import {
   UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
 import { RolInterno } from '../../../usuarios/domain/enums/rol-interno.enum';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
 
 export interface TomarTramiteCommand {
@@ -27,7 +26,7 @@ export class TomarTramiteUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: TomarTramiteCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: TomarTramiteCommand): Promise<Tramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -56,13 +55,10 @@ export class TomarTramiteUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    let updated = tramite;
     if (this.tramiteRepository.updateIfUnassigned) {
-      updated = await this.tramiteRepository.updateIfUnassigned(tramite);
+      return await this.tramiteRepository.updateIfUnassigned(tramite);
     } else {
-      updated = await this.tramiteRepository.update(tramite);
+      return await this.tramiteRepository.update(tramite);
     }
-
-    return TramiteResponseMapper.toTransitionDto(updated);
   }
 }

@@ -15,6 +15,7 @@ import { AnyAuthGuard } from '../../../auth/infrastructure/guards/any-auth.guard
 import { TramiteOwnershipGuard } from '../../../auth/infrastructure/guards/tramite-ownership.guard';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../../auth/domain/auth-user.interface';
+import { TramiteResponseMapper } from '../../application/mappers/tramite-response.mapper';
 
 @Controller('tramites/:id/comentarios')
 @UseGuards(AnyAuthGuard, TramiteOwnershipGuard)
@@ -29,10 +30,11 @@ export class ComentariosController {
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.listarComentariosUseCase.execute({
+    const comentarios = await this.listarComentariosUseCase.execute({
       tramiteId: id,
       usuarioTipo: user.tipo,
     });
+    return comentarios.map(TramiteResponseMapper.toComentarioDto);
   }
 
   @Post()
@@ -42,12 +44,13 @@ export class ComentariosController {
     @Body() dto: CreateComentarioDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.agregarComentarioUseCase.execute({
+    const comentario = await this.agregarComentarioUseCase.execute({
       tramiteId: id,
       mensaje: dto.mensaje,
       visibilidad: dto.visibilidad,
       usuarioTipo: user.tipo,
       usuarioId: user.id,
     });
+    return TramiteResponseMapper.toComentarioDto(comentario);
   }
 }

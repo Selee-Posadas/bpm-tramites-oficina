@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { USUARIO_REPOSITORY_TOKEN } from './domain/repositories/usuario.repository.interface';
@@ -8,7 +8,7 @@ import { ListarUsuariosInternosUseCase } from './application/use-cases/listar-us
 import { ObtenerUsuarioInternoUseCase } from './application/use-cases/obtener-usuario-interno.use-case';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, forwardRef(() => AuthModule)],
   controllers: [UsuariosController],
   providers: [
     {

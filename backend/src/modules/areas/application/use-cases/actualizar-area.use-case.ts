@@ -3,14 +3,11 @@ import {
   IAreaRepository,
   AREA_REPOSITORY_TOKEN,
 } from '../../domain/repositories/area.repository.interface';
+import { Area } from '../../domain/entities/area.entity';
 import {
   EntityNotFoundException,
   DuplicateEntityException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  AreaResponseMapper,
-  AreaResponseDto,
-} from '../mappers/area-response.mapper';
 
 export interface ActualizarAreaCommand {
   id: string;
@@ -26,7 +23,7 @@ export class ActualizarAreaUseCase {
     private readonly areaRepository: IAreaRepository,
   ) {}
 
-  async execute(command: ActualizarAreaCommand): Promise<AreaResponseDto> {
+  async execute(command: ActualizarAreaCommand): Promise<Area> {
     const area = await this.areaRepository.findById(command.id);
     if (!area) {
       throw new EntityNotFoundException('Área', command.id);
@@ -54,7 +51,6 @@ export class ActualizarAreaUseCase {
       }
     }
 
-    const updated = await this.areaRepository.update(area);
-    return AreaResponseMapper.toResponseDto(updated);
+    return await this.areaRepository.update(area);
   }
 }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Tramite } from '../../domain/entities/tramite.entity';
 import { AccionWorkflow } from '../../domain/enums/accion-workflow.enum';
 import { WorkflowContext } from '../../domain/workflow/workflow.interface';
 import { ITramiteRepository, TRAMITE_REPOSITORY_TOKEN } from '../../domain/repositories/tramite.repository.interface';
@@ -6,9 +7,9 @@ import { IMovimientoTramiteRepository, MOVIMIENTO_TRAMITE_REPOSITORY_TOKEN } fro
 import {
   EntityNotFoundException,
   BusinessRuleValidationException,
+  UnauthorizedActionException,
 } from '../../../../shared/domain/exceptions/domain.exception';
-import { WorkflowTransitionResponseDto } from '../dto/workflow-transition-response.dto';
-import { TramiteResponseMapper } from '../mappers/tramite-response.mapper';
+import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
 import * as crypto from 'crypto';
 
 export interface SolicitarIntervencionExternaCommand {
@@ -26,22 +27,18 @@ export class SolicitarIntervencionExternaUseCase {
     private readonly movimientoRepository: IMovimientoTramiteRepository,
   ) {}
 
-  async execute(command: SolicitarIntervencionExternaCommand): Promise<WorkflowTransitionResponseDto> {
+  async execute(command: SolicitarIntervencionExternaCommand): Promise<Tramite> {
     if (!command.motivo || command.motivo.trim().length === 0) {
-      throw new BusinessRuleValidationException(
-        'Debe detallar el requerimiento o motivo de la intervención externa solicitada',
-      );
+      throw new BusinessRuleValidationException('El motivo de la solicitud de intervención es obligatorio');
+    }
+
+    if (command.contexto.usuarioTipo !== TipoUsuario.INTERNO) {
+      throw new UnauthorizedActionException('Solo personal interno puede solicitar intervención externa');
     }
 
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
-    }
-
-    if (!tramite.usuarioExternoId) {
-      throw new BusinessRuleValidationException(
-        'El trámite debe tener un usuario externo asociado para requerir su intervención',
-      );
     }
 
     const contextWithReason: WorkflowContext = {
@@ -57,7 +54,6 @@ export class SolicitarIntervencionExternaUseCase {
     );
 
     await this.movimientoRepository.save(movimiento);
-    const updated = await this.tramiteRepository.update(tramite);
-    return TramiteResponseMapper.toTransitionDto(updated);
+    return await this.tramiteRepository.update(tramite);
   }
 }

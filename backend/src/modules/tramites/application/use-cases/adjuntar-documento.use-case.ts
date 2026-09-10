@@ -10,13 +10,7 @@ import {
   TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/tramite.repository.interface';
 import { EntityNotFoundException } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TramiteResponseMapper,
-  DocumentoResponseDto,
-} from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
-
-export type DocumentoAdjuntadoResponseDto = DocumentoResponseDto;
 
 export interface AdjuntarDocumentoCommand {
   tramiteId: string;
@@ -37,7 +31,7 @@ export class AdjuntarDocumentoUseCase {
     private readonly tramiteRepository: ITramiteRepository,
   ) {}
 
-  async execute(command: AdjuntarDocumentoCommand): Promise<DocumentoAdjuntadoResponseDto> {
+  async execute(command: AdjuntarDocumentoCommand): Promise<DocumentoTramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -55,7 +49,6 @@ export class AdjuntarDocumentoUseCase {
       fechaCarga: new Date(),
     });
 
-    const saved = await this.documentoRepository.save(documento);
-    return TramiteResponseMapper.toDocumentoDto(saved);
+    return await this.documentoRepository.save(documento);
   }
 }

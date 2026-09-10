@@ -5,10 +5,6 @@ import {
 } from '../../domain/repositories/tipo-tramite.repository.interface';
 import { TipoTramite } from '../../domain/entities/tipo-tramite.entity';
 import { DuplicateEntityException } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TipoTramiteResponseMapper,
-  TipoTramiteResponseDto,
-} from '../mappers/tipo-tramite-response.mapper';
 import * as crypto from 'crypto';
 
 export interface CrearTipoTramiteCommand {
@@ -29,7 +25,7 @@ export class CrearTipoTramiteUseCase {
     private readonly tipoTramiteRepository: ITipoTramiteRepository,
   ) {}
 
-  async execute(command: CrearTipoTramiteCommand): Promise<TipoTramiteResponseDto> {
+  async execute(command: CrearTipoTramiteCommand): Promise<TipoTramite> {
     const existing = await this.tipoTramiteRepository.findByCodigo(command.codigo);
     if (existing) {
       throw new DuplicateEntityException('Tipo de trámite', 'código', command.codigo);
@@ -48,7 +44,6 @@ export class CrearTipoTramiteUseCase {
       fechaCreacion: new Date(),
     });
 
-    const saved = await this.tipoTramiteRepository.save(tipo);
-    return TipoTramiteResponseMapper.toResponseDto(saved);
+    return await this.tipoTramiteRepository.save(tipo);
   }
 }

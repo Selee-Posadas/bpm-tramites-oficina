@@ -17,10 +17,6 @@ export interface EliminarTramiteBorradorCommand {
   usuarioId: string;
 }
 
-export interface EliminarTramiteBorradorResponseDto {
-  message: string;
-}
-
 @Injectable()
 export class EliminarTramiteBorradorUseCase {
   constructor(
@@ -28,7 +24,7 @@ export class EliminarTramiteBorradorUseCase {
     private readonly tramiteRepository: ITramiteRepository,
   ) {}
 
-  async execute(command: EliminarTramiteBorradorCommand): Promise<EliminarTramiteBorradorResponseDto> {
+  async execute(command: EliminarTramiteBorradorCommand): Promise<void> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -50,6 +46,5 @@ export class EliminarTramiteBorradorUseCase {
     }
 
     await this.tramiteRepository.delete(command.tramiteId);
-    return { message: 'Trámite borrador eliminado con éxito' };
   }
 }

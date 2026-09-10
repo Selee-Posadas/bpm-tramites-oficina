@@ -24,6 +24,7 @@ import { TramiteOwnershipGuard } from '../../../auth/infrastructure/guards/trami
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../../auth/domain/auth-user.interface';
 import { TipoUsuario } from '../../domain/enums/tipo-usuario.enum';
+import { TramiteResponseMapper } from '../../application/mappers/tramite-response.mapper';
 
 @Controller('tramites')
 @UseGuards(AnyAuthGuard)
@@ -41,11 +42,17 @@ export class TramitesController {
     @Query() query: FiltrosTramiteDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.listarTramitesUseCase.execute({
+    const result = await this.listarTramitesUseCase.execute({
       filtros: query,
       usuarioTipo: user.tipo,
       usuarioId: user.id,
+      rolInterno: user.rolInterno,
+      areaUsuarioId: user.areaId,
     });
+    const dtos = result.items.map((item) =>
+      TramiteResponseMapper.toItemDto(item.tramite, item.tipo, item.sla),
+    );
+    return TramiteResponseMapper.toListDto(dtos, result.total, result.skip, result.take);
   }
 
   @Get(':id')
@@ -54,13 +61,19 @@ export class TramitesController {
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.obtenerTramiteUseCase.execute({
+    const detalle = await this.obtenerTramiteUseCase.execute({
       tramiteId: id,
       usuarioTipo: user.tipo,
       usuarioId: user.id,
       rolInterno: user.rolInterno,
       areaUsuarioId: user.areaId,
     });
+    return TramiteResponseMapper.toDetalleDto(
+      detalle.tramite,
+      detalle.tipoTramite,
+      detalle.slaInfo,
+      detalle.comentariosVisibles,
+    );
   }
 
   @Post()
@@ -69,7 +82,7 @@ export class TramitesController {
     @Body() dto: CreateTramiteDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.crearTramiteUseCase.execute({
+    const tramite = await this.crearTramiteUseCase.execute({
       tipoTramiteId: dto.tipoTramiteId,
       titulo: dto.titulo,
       descripcion: dto.descripcion,
@@ -79,7 +92,9 @@ export class TramitesController {
       areaDestinoId: user.areaId,
       usuarioExternoId:
         user.tipo === TipoUsuario.EXTERNO ? user.id : dto.usuarioExternoId,
+      website: dto.website,
     });
+    return TramiteResponseMapper.toCreadoDto(tramite);
   }
 
   @Put(':id')
@@ -89,7 +104,7 @@ export class TramitesController {
     @Body() dto: UpdateTramiteDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.modificarBorradorUseCase.execute({
+    const tramite = await this.modificarBorradorUseCase.execute({
       tramiteId: id,
       titulo: dto.titulo,
       descripcion: dto.descripcion,
@@ -97,6 +112,7 @@ export class TramitesController {
       usuarioTipo: user.tipo,
       usuarioId: user.id,
     });
+    return TramiteResponseMapper.toModificadoDto(tramite);
   }
 
   @Delete(':id')
@@ -106,10 +122,11 @@ export class TramitesController {
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.eliminarTramiteBorradorUseCase.execute({
+    await this.eliminarTramiteBorradorUseCase.execute({
       tramiteId: id,
       usuarioTipo: user.tipo,
       usuarioId: user.id,
     });
+    return { message: 'Trámite borrador eliminado con éxito' };
   }
 }

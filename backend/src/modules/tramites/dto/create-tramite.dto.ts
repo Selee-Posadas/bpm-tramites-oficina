@@ -8,7 +8,7 @@ import {
 import { PrioridadTramite } from '../domain/enums/prioridad-tramite.enum';
 
 export class CreateTramiteDto {
-  @IsUUID()
+  @IsUUID('all')
   @IsNotEmpty()
   tipoTramiteId!: string;
 
@@ -24,7 +24,11 @@ export class CreateTramiteDto {
   @IsOptional()
   prioridad?: PrioridadTramite;
 
-  @IsUUID()
+  @IsUUID('all')
   @IsOptional()
   usuarioExternoId?: string;
+
+  @IsString()
+  @IsOptional()
+  website?: string;
 }

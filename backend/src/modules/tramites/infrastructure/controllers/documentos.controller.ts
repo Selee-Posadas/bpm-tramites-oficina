@@ -17,6 +17,7 @@ import { AnyAuthGuard } from '../../../auth/infrastructure/guards/any-auth.guard
 import { TramiteOwnershipGuard } from '../../../auth/infrastructure/guards/tramite-ownership.guard';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../../auth/domain/auth-user.interface';
+import { TramiteResponseMapper } from '../../application/mappers/tramite-response.mapper';
 
 @Controller('tramites/:id/documentos')
 @UseGuards(AnyAuthGuard, TramiteOwnershipGuard)
@@ -29,7 +30,8 @@ export class DocumentosController {
 
   @Get()
   async findByTramiteId(@Param('id') id: string) {
-    return await this.listarDocumentosUseCase.execute(id);
+    const docs = await this.listarDocumentosUseCase.execute(id);
+    return docs.map(TramiteResponseMapper.toDocumentoDto);
   }
 
   @Post()
@@ -39,7 +41,7 @@ export class DocumentosController {
     @Body() dto: AdjuntarDocumentoDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.adjuntarDocumentoUseCase.execute({
+    const doc = await this.adjuntarDocumentoUseCase.execute({
       tramiteId: id,
       nombreArchivo: dto.nombreArchivo,
       mimeType: dto.mimeType,
@@ -48,6 +50,7 @@ export class DocumentosController {
       subidoPorTipo: user.tipo,
       subidoPorId: user.id,
     });
+    return TramiteResponseMapper.toDocumentoDto(doc);
   }
 
   @Delete(':documentoId')
@@ -57,11 +60,12 @@ export class DocumentosController {
     @Param('documentoId') documentoId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return await this.eliminarDocumentoUseCase.execute({
+    await this.eliminarDocumentoUseCase.execute({
       documentoId,
       tramiteId: id,
       usuarioId: user.id,
       rolInterno: user.rolInterno,
     });
+    return { message: 'Documento eliminado con éxito' };
   }
 }

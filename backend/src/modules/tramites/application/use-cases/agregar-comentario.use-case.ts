@@ -11,13 +11,7 @@ import {
   TRAMITE_REPOSITORY_TOKEN,
 } from '../../domain/repositories/tramite.repository.interface';
 import { EntityNotFoundException } from '../../../../shared/domain/exceptions/domain.exception';
-import {
-  TramiteResponseMapper,
-  ComentarioResponseDto,
-} from '../mappers/tramite-response.mapper';
 import * as crypto from 'crypto';
-
-export type ComentarioAgregadoResponseDto = ComentarioResponseDto;
 
 export interface AgregarComentarioCommand {
   tramiteId: string;
@@ -36,7 +30,7 @@ export class AgregarComentarioUseCase {
     private readonly tramiteRepository: ITramiteRepository,
   ) {}
 
-  async execute(command: AgregarComentarioCommand): Promise<ComentarioAgregadoResponseDto> {
+  async execute(command: AgregarComentarioCommand): Promise<ComentarioTramite> {
     const tramite = await this.tramiteRepository.findById(command.tramiteId);
     if (!tramite) {
       throw new EntityNotFoundException('Trámite', command.tramiteId);
@@ -58,7 +52,6 @@ export class AgregarComentarioUseCase {
       fecha: new Date(),
     });
 
-    const saved = await this.comentarioRepository.save(comentario);
-    return TramiteResponseMapper.toComentarioDto(saved);
+    return await this.comentarioRepository.save(comentario);
   }
 }
