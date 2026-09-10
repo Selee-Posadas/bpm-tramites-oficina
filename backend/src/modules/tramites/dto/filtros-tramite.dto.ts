@@ -5,6 +5,7 @@ import {
   IsString,
   IsInt,
   IsBoolean,
+  IsDate,
   Min,
   Max,
 } from 'class-validator';
@@ -57,6 +58,16 @@ export class FiltrosTramiteDto {
   @IsString()
   @IsOptional()
   busqueda?: string;
+
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  fechaDesde?: Date;
+
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  fechaHasta?: Date;
 
   @Type(() => Number)
   @IsInt()

@@ -91,6 +91,8 @@ export interface TramiteFiltros {
   tipoTramiteId?: string;
   soloVencidos?: boolean;
   busqueda?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
   skip?: number;
   take?: number;
 }

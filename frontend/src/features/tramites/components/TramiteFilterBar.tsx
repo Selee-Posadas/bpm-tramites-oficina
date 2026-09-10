@@ -116,6 +116,36 @@ export const TramiteFilterBar: React.FC<TramiteFilterBarProps> = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            id="filtro-fecha-desde-input"
+            name="fechaDesde"
+            type="date"
+            label="Fecha Desde"
+            variant="outlined"
+            size="small"
+            fullWidth
+            slotProps={{ inputLabel: { shrink: true } }}
+            value={filtros.fechaDesde || ''}
+            onChange={(e) => onFiltrosChange({ fechaDesde: e.target.value || undefined })}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            id="filtro-fecha-hasta-input"
+            name="fechaHasta"
+            type="date"
+            label="Fecha Hasta"
+            variant="outlined"
+            size="small"
+            fullWidth
+            slotProps={{ inputLabel: { shrink: true } }}
+            value={filtros.fechaHasta || ''}
+            onChange={(e) => onFiltrosChange({ fechaHasta: e.target.value || undefined })}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControlLabel
             control={
               <Switch

@@ -82,4 +82,28 @@ describe('Filtros de Trámites (TramiteFilterBar)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Limpiar/i }));
     expect(handleReset).toHaveBeenCalled();
   });
+
+  it('debe permitir filtrar por rango de fechas (fechaDesde y fechaHasta)', () => {
+    const handleFiltrosChange = vi.fn();
+
+    render(
+      <ThemeRegistry>
+        <TramiteFilterBar
+          filtros={{}}
+          areas={mockAreas}
+          tiposTramite={mockTipos}
+          onFiltrosChange={handleFiltrosChange}
+          onReset={vi.fn()}
+        />
+      </ThemeRegistry>,
+    );
+
+    const fechaDesdeInput = screen.getByLabelText(/Fecha Desde/i);
+    fireEvent.change(fechaDesdeInput, { target: { value: '2026-09-01' } });
+    expect(handleFiltrosChange).toHaveBeenCalledWith({ fechaDesde: '2026-09-01' });
+
+    const fechaHastaInput = screen.getByLabelText(/Fecha Hasta/i);
+    fireEvent.change(fechaHastaInput, { target: { value: '2026-09-30' } });
+    expect(handleFiltrosChange).toHaveBeenCalledWith({ fechaHasta: '2026-09-30' });
+  });
 });
