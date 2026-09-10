@@ -14,10 +14,10 @@ const PALETTE = ['#2563eb', '#0d9488', '#d97706', '#9333ea', '#e11d48', '#0284c7
 export const AreaWorkloadCard: React.FC<AreaWorkloadCardProps> = ({ areas }) => {
   return (
     <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, height: '100%' }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-          <DomainOutlinedIcon color="primary" />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <DomainOutlinedIcon color="primary" fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
             Carga de Trabajo por Área
           </Typography>
         </Box>
@@ -27,7 +27,7 @@ export const AreaWorkloadCard: React.FC<AreaWorkloadCardProps> = ({ areas }) => 
             No hay trámites asignados a áreas actualmente.
           </Typography>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {areas.map((area, index) => {
               const color = PALETTE[index % PALETTE.length];
               return (

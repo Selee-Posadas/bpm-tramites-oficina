@@ -37,10 +37,10 @@ export const OrigenDistributionCard: React.FC<OrigenDistributionCardProps> = ({
 }) => {
   return (
     <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, height: '100%' }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-          <AltRouteOutlinedIcon color="primary" />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <AltRouteOutlinedIcon color="primary" fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
             Trámites por Circuito de Origen
           </Typography>
         </Box>
@@ -50,7 +50,7 @@ export const OrigenDistributionCard: React.FC<OrigenDistributionCardProps> = ({
             No hay datos de origen registrados.
           </Typography>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
             {origenes.map((item) => {
               const style = ORIGEN_COLORS[item.origen] || {
                 color: '#64748b',

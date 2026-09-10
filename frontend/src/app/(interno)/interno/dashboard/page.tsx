@@ -10,6 +10,7 @@ import {
   LinearProgress,
   Button,
   Paper,
+  Chip,
 } from '@mui/material';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -26,6 +27,13 @@ import { EstadoDistributionChart } from '@/features/dashboard/components/EstadoD
 import { OrigenDistributionCard } from '@/features/dashboard/components/OrigenDistributionCard';
 import { AreaWorkloadCard } from '@/features/dashboard/components/AreaWorkloadCard';
 import { UltimosMovimientosTable } from '@/features/dashboard/components/UltimosMovimientosTable';
+
+const PRIORIDAD_COLORS: Record<string, { color: string; bg: string }> = {
+  BAJA: { color: '#64748b', bg: '#f1f5f9' },
+  MEDIA: { color: '#0284c7', bg: '#e0f2fe' },
+  ALTA: { color: '#d97706', bg: '#fef3c7' },
+  URGENTE: { color: '#dc2626', bg: '#fee2e2' },
+};
 
 export default function InternoDashboardPage() {
   const { stats, isLoading, error } = useDashboard();
@@ -119,7 +127,7 @@ export default function InternoDashboardPage() {
         </Box>
       </Box>
 
-      <Grid container spacing={2.5} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, height: '100%' }}>
             <CardContent>
@@ -283,11 +291,11 @@ export default function InternoDashboardPage() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 7 }}>
+      <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12, md: 7.5 }}>
           <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2.5 }}>
+            <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
                 Distribución de Trámites por Estado
               </Typography>
               <EstadoDistributionChart estados={tramitesPorEstado} total={stats.totalTramites} />
@@ -295,7 +303,7 @@ export default function InternoDashboardPage() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 4.5 }}>
           <Card
             elevation={0}
             sx={{
@@ -305,30 +313,77 @@ export default function InternoDashboardPage() {
               bgcolor: '#ffffff',
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2.5 }}>
+            <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
                 Trámites por Nivel de Prioridad
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.85 }}>
                 {(['BAJA', 'MEDIA', 'ALTA', 'URGENTE'] as const).map((p) => {
                   const cantidad = tramitesPorPrioridad[p] ?? 0;
+                  const pct =
+                    stats.totalTramites > 0
+                      ? Math.round((cantidad / stats.totalTramites) * 100)
+                      : 0;
+                  const style = PRIORIDAD_COLORS[p];
                   return (
                     <Box
                       key={p}
                       sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        py: 1,
-                        px: 1,
-                        borderBottom: '1px solid #f1f5f9',
-                        '&:last-child': { borderBottom: 'none' },
+                        py: 0.4,
+                        px: 0.75,
+                        borderRadius: 1.5,
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
                       }}
                     >
-                      <PrioridadBadge prioridad={p} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                        {cantidad}
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 0.35,
+                        }}
+                      >
+                        <PrioridadBadge prioridad={p} size="small" />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                            {cantidad}
+                          </Typography>
+                          <Chip
+                            label={`${pct}%`}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: '0.625rem',
+                              fontWeight: 700,
+                              bgcolor: style.bg,
+                              color: style.color,
+                              border: `1px solid ${style.color}33`,
+                              px: 0,
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          bgcolor: '#f1f5f9',
+                          borderRadius: 2,
+                          height: 3.5,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: `${pct}%`,
+                            bgcolor: style.color,
+                            height: '100%',
+                            borderRadius: 2,
+                            transition: 'width 0.4s ease-in-out',
+                          }}
+                        />
+                      </Box>
                     </Box>
                   );
                 })}
@@ -338,7 +393,7 @@ export default function InternoDashboardPage() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <OrigenDistributionCard origenes={stats.tramitesPorOrigen} total={stats.totalTramites} />
         </Grid>
@@ -348,7 +403,7 @@ export default function InternoDashboardPage() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2.5}>
         <Grid size={{ xs: 12 }}>
           <UltimosMovimientosTable movimientos={stats.ultimosMovimientos} />
         </Grid>

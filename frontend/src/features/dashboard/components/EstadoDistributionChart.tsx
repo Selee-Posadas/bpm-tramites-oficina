@@ -1,20 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  LinearProgress,
-  Chip,
-  Tooltip,
-} from '@mui/material';
+import { Box, Typography, LinearProgress, Chip, Tooltip } from '@mui/material';
 
 import { EstadoDistributionChartProps, SliceData } from '../interfaces/dashboard.interface';
 
-export const ESTADO_CONFIG: Record<
-  string,
-  { label: string; color: string; bgSoft: string }
-> = {
+export const ESTADO_CONFIG: Record<string, { label: string; color: string; bgSoft: string }> = {
   BORRADOR: { label: 'Borrador', color: '#94a3b8', bgSoft: '#f8fafc' },
   INGRESADO: { label: 'Ingresado', color: '#0284c7', bgSoft: '#e0f2fe' },
   EN_REVISION: { label: 'En Revisión', color: '#2563eb', bgSoft: '#dbeafe' },
@@ -34,21 +25,16 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
 }) => {
   const [hoveredState, setHoveredState] = useState<string | null>(null);
 
-  const radius = 68;
-  const strokeWidth = 20;
-  const hoverStrokeWidth = 26;
+  const radius = 54;
+  const strokeWidth = 16;
+  const hoverStrokeWidth = 22;
   const circumference = 2 * Math.PI * radius;
-  const size = 180;
+  const size = 148;
   const center = size / 2;
 
-  const activeEntries = Object.entries(estados || {}).filter(
-    ([, cantidad]) => cantidad > 0
-  );
+  const activeEntries = Object.entries(estados || {}).filter(([, cantidad]) => cantidad > 0);
 
-  const totalCalculado =
-    total > 0
-      ? total
-      : activeEntries.reduce((acc, [, cant]) => acc + cant, 0);
+  const totalCalculado = total > 0 ? total : activeEntries.reduce((acc, [, cant]) => acc + cant, 0);
 
   let currentOffset = 0;
   const slices: SliceData[] = activeEntries.map(([estado, cantidad]) => {
@@ -57,8 +43,7 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
       color: '#6b7280',
       bgSoft: '#f3f4f6',
     };
-    const porcentaje =
-      totalCalculado > 0 ? Math.round((cantidad / totalCalculado) * 100) : 0;
+    const porcentaje = totalCalculado > 0 ? Math.round((cantidad / totalCalculado) * 100) : 0;
     const length = (cantidad / totalCalculado) * circumference;
     const slice: SliceData = {
       estado,
@@ -77,7 +62,14 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
   const activeSlice = slices.find((s) => s.estado === hoveredState);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, alignItems: 'center', gap: 3.5 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'center',
+        gap: { xs: 2, md: 3 },
+      }}
+    >
       <Box
         sx={{
           position: 'relative',
@@ -142,11 +134,12 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
           }}
         >
           <Typography
-            variant="h4"
+            variant="h5"
             sx={{
               fontWeight: 800,
+              fontSize: '1.45rem',
               color: activeSlice ? activeSlice.color : 'text.primary',
-              lineHeight: 1,
+              lineHeight: 1.1,
               transition: 'color 0.2s ease',
             }}
           >
@@ -157,9 +150,9 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
             sx={{
               color: 'text.secondary',
               fontWeight: 600,
-              fontSize: '0.6875rem',
+              fontSize: '0.65rem',
               display: 'block',
-              mt: 0.3,
+              mt: 0.2,
             }}
           >
             {activeSlice ? `${activeSlice.porcentaje}%` : 'Total'}
@@ -167,9 +160,22 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
         </Box>
       </Box>
 
-      <Box sx={{ flexGrow: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          width: '100%',
+          display: slices.length === 0 ? 'block' : 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+          columnGap: 2,
+          rowGap: 0.75,
+        }}
+      >
         {slices.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 3 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontStyle: 'italic', textAlign: 'center', py: 2 }}
+          >
             No hay trámites registrados para mostrar en el gráfico.
           </Typography>
         ) : (
@@ -181,62 +187,84 @@ export const EstadoDistributionChart: React.FC<EstadoDistributionChartProps> = (
                 onMouseEnter={() => setHoveredState(slice.estado)}
                 onMouseLeave={() => setHoveredState(null)}
                 sx={{
-                  p: 1,
-                  borderRadius: 2,
+                  py: 0.4,
+                  px: 0.75,
+                  borderRadius: 1.5,
                   cursor: 'pointer',
-                  bgcolor: isHovered ? 'rgba(0,0,0,0.03)' : 'transparent',
+                  bgcolor: isHovered ? 'rgba(0,0,0,0.035)' : 'transparent',
                   transition: 'background-color 0.15s ease',
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 0.35,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
                     <Box
                       sx={{
-                        width: 10,
-                        height: 10,
+                        width: 8,
+                        height: 8,
                         borderRadius: '50%',
                         bgcolor: slice.color,
-                        boxShadow: `0 0 6px ${slice.color}66`,
+                        flexShrink: 0,
+                        boxShadow: `0 0 5px ${slice.color}66`,
                       }}
                     />
                     <Typography
                       variant="body2"
+                      noWrap
                       sx={{
                         fontWeight: isHovered ? 700 : 500,
                         color: isHovered ? slice.color : 'text.primary',
-                        fontSize: '0.8125rem',
+                        fontSize: '0.75rem',
                       }}
                     >
                       {slice.label}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8125rem' }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0, ml: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
                       {slice.cantidad}
                     </Typography>
                     <Chip
                       label={`${slice.porcentaje}%`}
                       size="small"
                       sx={{
-                        height: 18,
-                        fontSize: '0.6875rem',
+                        height: 16,
+                        fontSize: '0.625rem',
                         fontWeight: 700,
                         bgcolor: slice.bgSoft,
                         color: slice.color,
                         border: `1px solid ${slice.color}33`,
+                        px: 0,
+                        '& .MuiChip-label': { px: 0.5 },
                       }}
                     />
                   </Box>
                 </Box>
 
-                <Box sx={{ width: '100%', bgcolor: '#f1f5f9', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    bgcolor: '#f1f5f9',
+                    borderRadius: 2,
+                    height: 3.5,
+                    overflow: 'hidden',
+                  }}
+                >
                   <Box
                     sx={{
                       width: `${slice.porcentaje}%`,
                       bgcolor: slice.color,
                       height: '100%',
-                      borderRadius: 4,
+                      borderRadius: 2,
                       transition: 'width 0.4s ease-in-out',
                     }}
                   />
