@@ -186,3 +186,39 @@ El frontend debe ofrecer dos experiencias completamente diferenciadas (`/interno
    - Las interfaces TypeScript se declaran en `interfaces/` separadas (`.api.interface.ts` y `.interface.ts`).
 3. **Formularios con Formik y Yup**:
    - Cada formulario cuenta con su schema de validación Yup, garantizando accesibilidad y feedback visual inmediato.
+
+---
+
+## ADR 09: Estrategia Integral de Validaciones (Estructural vs Dominio)
+
+### Contexto
+El sistema debe validar dos niveles de restricciones:
+1. Validez sintáctica y estructural de los payloads entrantes (formatos, campos requeridos, tipos).
+2. Validez semántica y cumplimiento de reglas de negocio e invariantes del workflow.
+
+### Decisión
+- **Validación Estructural (Entrada)**:
+  - Backend: `ValidationPipe` global con `class-validator` y `class-transformer` configurado con `whitelist: true`, `forbidNonWhitelisted: true` y `transform: true`. Cualquier campo no definido en el DTO es rechazado automáticamente con HTTP 400.
+  - Frontend: Esquemas estrictos de **Yup** vinculados a formularios **Formik**, ofreciendo validación en tiempo real y feedback accesible (`htmlFor`, `aria-describedby`).
+- **Validación Semántica y Reglas de Negocio (Dominio)**:
+  - Ejecutada exclusivamente dentro de las entidades puras y las máquinas de estados (`ITramiteWorkflow`).
+  - Si un usuario intenta una transición no permitida (ej: aprobar un trámite en BORRADOR, o cerrar un trámite no aprobado), el dominio lanza una `InvalidStateTransitionException` o `BusinessRuleException` que el filtro global traduce inmediatamente a **HTTP 422 Unprocessable Entity**.
+
+---
+
+## ADR 10: Matriz de Trade-offs y Compromisos Técnicos
+
+### Contexto
+Toda decisión arquitectónica involucra balances entre velocidad de desarrollo, pureza teórica, seguridad y rendimiento.
+
+### Matriz de Trade-offs Adoptados
+
+| Decisión Arquitectónica | Alternativa Descartada | Beneficio Obtenido | Costo / Compromiso Aceptado |
+|---|---|---|---|
+| **Mappers Bidireccionales Explícitos** | Inyectar modelos Prisma directo en el dominio | Aislamiento total: el dominio no depende de la base de datos ni de decorators de Prisma. | Requiere escribir funciones manuales `toDomain` y `toPersistence` por agregado. |
+| **Fastify Adapter sobre Express** | Express estándar de NestJS | Rendimiento HTTP hasta 2 veces superior y menor consumo de memoria. | Incompatibilidad con ciertos middlewares tradicionales de Express; se usaron plugins nativos `@fastify/*`. |
+| **Bloqueo Pesimista en `TOMAR_TRAMITE`** | Enfoque optimista con versión | Cero colisiones: dos operadores concurrentes nunca reciben confirmación de toma simultánea. | Breve espera de bloqueo de fila a nivel de base de datos durante la transacción. |
+| **Mock Seguro OIDC Azure Entra ID** | Tenant real de Microsoft Azure Cloud | Despliegue 100% autónomo y reproducible en local sin requerir credenciales pagas de Microsoft. | Emula los claims OIDC estándar (`oid`, `roles`) en lugar de conectar vía red a Microsoft Identity Platform. |
+| **Cookies HttpOnly sin localStorage** | Almacenar tokens JWT en `localStorage` | Inmunidad contra robo de tokens mediante scripts maliciosos (XSS). | Requiere configuración de cabeceras `SameSite=Lax`, `Secure` y `credentials: 'include'`. |
+| **Formik + Yup en Frontend** | Inputs nativos sin librería de validación | Accesibilidad WCAG garantizada, control granular de estados touched/errors y validación tipada. | Mayor código boilerplate en la definición de cada formulario. |
+| **Workflows Específicos por Circuito** | Motor de reglas dinámico configurable | Tipado TypeScript estricto en tiempo de compilación y trazabilidad 1:1 contra el PDF. | Agregar un nuevo circuito en el futuro requiere crear una nueva clase workflow. |

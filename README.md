@@ -153,4 +153,5 @@ pnpm test
 - [Registro de Decisiones Arquitectónicas (ADR)](docs/DECISION_LOG.md)
 - [Guía de Operación en Producción](docs/PRODUCTION_NOTES.md)
 - [Propuesta de Arquitectura en AWS](docs/AWS_DEPLOYMENT.md)
-- [Reglas Maestras para Agentes (AGENTS.md)](AGENTS.md)
+- [Registro de Pull Requests y Flujo Git](docs/PRS.md)
+- [Informe de Auditoría Final Técnica](docs/FINAL_AUDIT.md)
