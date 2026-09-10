@@ -49,3 +49,14 @@ coverage/
 *.tsbuildinfo
 scratch/
 
+# Allow required project JSON files (overriding any global *.json ignore)
+!package.json
+!**/package.json
+!tsconfig*.json
+!**/tsconfig*.json
+!nest-cli.json
+!**/nest-cli.json
+!jest*.json
+!**/jest*.json
+
+
