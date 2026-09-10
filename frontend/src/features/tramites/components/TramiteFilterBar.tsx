@@ -13,17 +13,9 @@ import {
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { TramiteFiltros } from '../interfaces/tramite.interface';
+import { TramiteFiltros, TramiteFilterBarProps } from '../interfaces/tramite.interface';
 import { Area } from '../../areas/interfaces/area.interface';
 import { TipoTramite } from '../../tipos-tramite/interfaces/tipo-tramite.interface';
-
-interface TramiteFilterBarProps {
-  filtros: TramiteFiltros;
-  areas: Area[];
-  tiposTramite: TipoTramite[];
-  onFiltrosChange: (nuevosFiltros: Partial<TramiteFiltros>) => void;
-  onReset: () => void;
-}
 
 export const TramiteFilterBar: React.FC<TramiteFilterBarProps> = ({
   filtros,
@@ -31,7 +23,11 @@ export const TramiteFilterBar: React.FC<TramiteFilterBarProps> = ({
   tiposTramite,
   onFiltrosChange,
   onReset,
+  rolUsuario,
+  areaUsuarioId,
 }) => {
+  const esAreaRestringida = (rolUsuario === 'OPERADOR' || rolUsuario === 'SUPERVISOR') && Boolean(areaUsuarioId);
+
   return (
     <Paper elevation={0} sx={{ p: 2.5, mb: 3, borderRadius: 2, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
       <Grid container spacing={2} alignItems="center">
@@ -85,10 +81,12 @@ export const TramiteFilterBar: React.FC<TramiteFilterBarProps> = ({
             variant="outlined"
             size="small"
             fullWidth
-            value={filtros.areaId || ''}
+            disabled={esAreaRestringida}
+            helperText={esAreaRestringida ? 'Fija según tu área y rol' : undefined}
+            value={esAreaRestringida ? (areaUsuarioId || '') : (filtros.areaId || '')}
             onChange={(e) => onFiltrosChange({ areaId: e.target.value || undefined })}
           >
-            <MenuItem value="">Todas las Áreas</MenuItem>
+            {!esAreaRestringida && <MenuItem value="">Todas las Áreas</MenuItem>}
             {areas.map((a) => (
               <MenuItem key={a.id} value={a.id}>
                 {a.nombre}

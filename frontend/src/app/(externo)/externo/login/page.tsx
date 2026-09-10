@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -16,15 +16,22 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import LoginIcon from '@mui/icons-material/Login';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '@/shared/context/AuthContext';
+import { TipoUsuario } from '@/features/auth/interfaces/auth.interface';
 
 export default function ExternoLoginPage() {
-  const router = useRouter();
-  const { loginExternal, isLoading } = useAuth();
+  const { loginExternal, isLoading, isAuthenticated, user } = useAuth();
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.tipo === TipoUsuario.EXTERNO) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirect = searchParams.get('redirect') || '/externo/mis-tramites';
+      window.location.href = redirect;
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   const formik = useFormik({
     initialValues: {
@@ -39,7 +46,9 @@ export default function ExternoLoginPage() {
       setErrorMsg('');
       try {
         await loginExternal(values.email, values.password);
-        router.push('/externo/mis-tramites');
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirect = searchParams.get('redirect') || '/externo/mis-tramites';
+        window.location.href = redirect;
       } catch (err: unknown) {
         setErrorMsg('Credenciales inválidas. Verifique su email y contraseña.');
       }

@@ -20,7 +20,10 @@ export class TramiteActions {
   static async listar(filtros: TramiteFiltros = {}): Promise<{ items: TramiteResumen[]; total: number }> {
     const params: Record<string, string> = {};
     if (filtros.estado) params.estado = filtros.estado;
-    if (filtros.areaId) params.areaId = filtros.areaId;
+    if (filtros.areaId) {
+      params.areaId = filtros.areaId;
+      params.areaActualId = filtros.areaId;
+    }
     if (filtros.prioridad) params.prioridad = filtros.prioridad;
     if (filtros.tipoTramiteId) params.tipoTramiteId = filtros.tipoTramiteId;
     if (filtros.soloVencidos) params.soloVencidos = 'true';
@@ -41,12 +44,36 @@ export class TramiteActions {
   }
 
   static async crear(dto: CreateTramiteRequestDto): Promise<{ id: string; numero: string }> {
-    const response = await httpClient.post<{ id: string; numero: string }>('/tramites', dto);
+    const payload = Object.entries(dto).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed !== '') {
+          acc[key] = trimmed;
+        }
+      } else if (value !== undefined && value !== null) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    const response = await httpClient.post<{ id: string; numero: string }>('/tramites', payload);
     return response.data;
   }
 
   static async modificarBorrador(id: string, dto: Partial<CreateTramiteRequestDto>): Promise<void> {
-    await httpClient.put(`/tramites/${id}`, dto);
+    const payload = Object.entries(dto).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed !== '') {
+          acc[key] = trimmed;
+        }
+      } else if (value !== undefined && value !== null) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    await httpClient.put(`/tramites/${id}`, payload);
   }
 
   static async eliminarBorrador(id: string): Promise<void> {

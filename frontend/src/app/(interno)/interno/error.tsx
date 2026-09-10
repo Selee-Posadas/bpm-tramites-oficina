@@ -6,6 +6,8 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import HomeIcon from '@mui/icons-material/Home';
 import Link from 'next/link';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '@/shared/context/AuthContext';
 
 export default function InternoErrorBoundary({
   error,
@@ -14,6 +16,8 @@ export default function InternoErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { logoutInternal } = useAuth();
+
   useEffect(() => {
     console.error('Error no controlado en Portal Interno:', error);
   }, [error]);
@@ -76,6 +80,15 @@ export default function InternoErrorBoundary({
             size="large"
           >
             Ir al Dashboard
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<LogoutIcon />}
+            onClick={() => logoutInternal()}
+            size="large"
+          >
+            Cerrar Sesión / Cambiar Perfil
           </Button>
         </Box>
       </Paper>

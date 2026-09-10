@@ -6,20 +6,9 @@ import HistoryIcon from '@mui/icons-material/History';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { EstadoBadge } from '../Badges/EstadoBadge';
 
-export interface TimelineMovimientoItem {
-  id: string;
-  estadoAnterior?: string | null;
-  estadoNuevo: string;
-  usuarioTipo: string;
-  usuarioId: string;
-  accion: string;
-  comentario?: string | null;
-  fecha: Date | string;
-}
+import { TimelineMovimientoItem, TramiteTimelineProps } from '../../interfaces/timeline.interface';
 
-interface TramiteTimelineProps {
-  movimientos: TimelineMovimientoItem[];
-}
+export type { TimelineMovimientoItem, TramiteTimelineProps };
 
 export const TramiteTimeline: React.FC<TramiteTimelineProps> = ({ movimientos }) => {
   if (!movimientos || movimientos.length === 0) {

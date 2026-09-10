@@ -10,60 +10,85 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/interno')) {
+    const internalToken = request.cookies.get(COOKIE_INTERNAL_TOKEN)?.value;
+    const internalUserCookie = request.cookies.get(COOKIE_INTERNAL_USER)?.value;
+
     if (pathname === '/interno/login') {
       return NextResponse.next();
     }
 
-    const internalToken = request.cookies.get(COOKIE_INTERNAL_TOKEN)?.value;
-    const internalUserCookie = request.cookies.get(COOKIE_INTERNAL_USER)?.value;
-
-    if (!internalToken) {
+    if (!internalToken || !internalUserCookie) {
       const loginUrl = new URL('/interno/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      if (internalToken) res.cookies.delete(COOKIE_INTERNAL_TOKEN);
+      if (internalUserCookie) res.cookies.delete(COOKIE_INTERNAL_USER);
+      return res;
     }
 
-    if (internalUserCookie) {
-      try {
-        const user = JSON.parse(decodeURIComponent(internalUserCookie));
-        if (user.tipo === 'EXTERNO') {
-          const loginUrl = new URL('/interno/login', request.url);
-          return NextResponse.redirect(loginUrl);
-        }
-      } catch {
+    try {
+      const user = JSON.parse(decodeURIComponent(internalUserCookie));
+      if (user.tipo !== 'INTERNO') {
         const loginUrl = new URL('/interno/login', request.url);
-        return NextResponse.redirect(loginUrl);
+        loginUrl.searchParams.set('redirect', pathname);
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.delete(COOKIE_INTERNAL_TOKEN);
+        res.cookies.delete(COOKIE_INTERNAL_USER);
+        return res;
       }
+    } catch {
+      const loginUrl = new URL('/interno/login', request.url);
+      const res = NextResponse.redirect(loginUrl);
+      res.cookies.delete(COOKIE_INTERNAL_TOKEN);
+      res.cookies.delete(COOKIE_INTERNAL_USER);
+      return res;
     }
 
     return NextResponse.next();
   }
 
   if (pathname.startsWith('/externo')) {
-    if (pathname === '/externo/login' || pathname === '/externo/registro') {
-      return NextResponse.next();
-    }
-
     const externalToken = request.cookies.get(COOKIE_EXTERNAL_TOKEN)?.value;
     const externalUserCookie = request.cookies.get(COOKIE_EXTERNAL_USER)?.value;
 
-    if (!externalToken) {
-      const loginUrl = new URL('/externo/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+    if (pathname === '/externo/login' || pathname === '/externo/registro') {
+      if (externalToken && externalUserCookie) {
+        try {
+          const user = JSON.parse(decodeURIComponent(externalUserCookie));
+          if (user.tipo === 'EXTERNO') {
+            return NextResponse.redirect(new URL('/externo/mis-tramites', request.url));
+          }
+        } catch {
+        }
+      }
+      return NextResponse.next();
     }
 
-    if (externalUserCookie) {
-      try {
-        const user = JSON.parse(decodeURIComponent(externalUserCookie));
-        if (user.tipo === 'INTERNO') {
-          const loginUrl = new URL('/externo/login', request.url);
-          return NextResponse.redirect(loginUrl);
-        }
-      } catch {
+    if (!externalToken || !externalUserCookie) {
+      const loginUrl = new URL('/externo/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      const res = NextResponse.redirect(loginUrl);
+      if (externalToken) res.cookies.delete(COOKIE_EXTERNAL_TOKEN);
+      if (externalUserCookie) res.cookies.delete(COOKIE_EXTERNAL_USER);
+      return res;
+    }
+
+    try {
+      const user = JSON.parse(decodeURIComponent(externalUserCookie));
+      if (user.tipo !== 'EXTERNO') {
         const loginUrl = new URL('/externo/login', request.url);
-        return NextResponse.redirect(loginUrl);
+        loginUrl.searchParams.set('redirect', pathname);
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.delete(COOKIE_EXTERNAL_TOKEN);
+        res.cookies.delete(COOKIE_EXTERNAL_USER);
+        return res;
       }
+    } catch {
+      const loginUrl = new URL('/externo/login', request.url);
+      const res = NextResponse.redirect(loginUrl);
+      res.cookies.delete(COOKIE_EXTERNAL_TOKEN);
+      res.cookies.delete(COOKIE_EXTERNAL_USER);
+      return res;
     }
 
     return NextResponse.next();

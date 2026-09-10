@@ -6,3 +6,20 @@ export interface DashboardStats {
   tramitesEnTerminoSla: number;
   cumplimientoSlaPorcentaje: number;
 }
+
+export interface EstadoDistributionChartProps {
+  estados: Record<string, number>;
+  total: number;
+}
+
+export interface SliceData {
+  estado: string;
+  label: string;
+  cantidad: number;
+  porcentaje: number;
+  color: string;
+  bgSoft: string;
+  offset: number;
+  length: number;
+}
+

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TramiteDetalle } from '../interfaces/tramite.interface';
 import { TramiteActions } from '../actions/tramite.actions';
 import { useNotification } from '../../../shared/context/NotificationContext';
@@ -10,7 +10,8 @@ export function useTramite(id: string) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess } = useNotification();
+  const isMountedRef = useRef<boolean>(true);
 
   const cargar = useCallback(async () => {
     if (!id) return;
@@ -18,17 +19,28 @@ export function useTramite(id: string) {
     setError(null);
     try {
       const data = await TramiteActions.obtenerPorId(id);
-      setTramite(data);
+      if (isMountedRef.current) {
+        setTramite(data);
+      }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al cargar trámite';
-      setError(msg);
+      if (isMountedRef.current) {
+        const msg = err instanceof Error ? err.message : 'Error al cargar trámite';
+        setError(msg);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [id]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     cargar();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [cargar]);
 
   const ejecutarAccion = async (accionFn: () => Promise<unknown>, mensajeExito: string): Promise<boolean> => {

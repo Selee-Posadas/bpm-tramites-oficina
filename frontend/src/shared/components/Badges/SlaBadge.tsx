@@ -6,17 +6,9 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorIcon from '@mui/icons-material/Error';
 
-export interface SlaInfoProps {
-  vencido: boolean;
-  horasRestantes: number;
-  porcentajeConsumido: number;
-  fechaLimite?: Date | string;
-}
+import { SlaInfoProps, SlaBadgeProps } from '../../interfaces/badges.interface';
 
-interface SlaBadgeProps {
-  sla: SlaInfoProps;
-  showProgress?: boolean;
-}
+export type { SlaInfoProps, SlaBadgeProps };
 
 export const SlaBadge: React.FC<SlaBadgeProps> = ({ sla, showProgress = false }) => {
   if (sla.vencido) {

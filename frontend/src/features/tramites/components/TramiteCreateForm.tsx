@@ -19,15 +19,9 @@ import Link from 'next/link';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { TipoTramite } from '../../tipos-tramite/interfaces/tipo-tramite.interface';
-import { CreateTramiteFormValues } from '../interfaces/tramite.interface';
-
-interface TramiteCreateFormProps {
-  tiposTramite: TipoTramite[];
-  isInternal?: boolean;
-  isLoading?: boolean;
-  backHref: string;
-  onSubmit: (values: CreateTramiteFormValues) => Promise<void>;
-}
+import { CreateTramiteFormValues, TramiteCreateFormProps } from '../interfaces/tramite.interface';
+import { CreateTramiteRequestDto } from '../interfaces/tramite.api.interface';
+import { TramiteAdapter } from '../adapters/tramite.adapter';
 
 export const TramiteCreateForm: React.FC<TramiteCreateFormProps> = ({
   tiposTramite,
@@ -43,6 +37,7 @@ export const TramiteCreateForm: React.FC<TramiteCreateFormProps> = ({
       descripcion: '',
       prioridad: 'MEDIA',
       usuarioExternoId: '',
+      website: '',
     },
     validationSchema: Yup.object({
       tipoTramiteId: Yup.string().required('Debe seleccionar un tipo de trámite'),
@@ -50,10 +45,12 @@ export const TramiteCreateForm: React.FC<TramiteCreateFormProps> = ({
       descripcion: Yup.string().trim().required('La descripción es obligatoria').min(10, 'Mínimo 10 caracteres'),
       prioridad: Yup.string().oneOf(['BAJA', 'MEDIA', 'ALTA', 'URGENTE']).required(),
       usuarioExternoId: Yup.string().optional(),
+      website: Yup.string().optional(),
     }),
     enableReinitialize: true,
     onSubmit: async (values) => {
-      await onSubmit(values);
+      const payload = TramiteAdapter.toCreatePayload(values, isInternal);
+      await onSubmit(payload);
     },
   });
 
@@ -77,6 +74,29 @@ export const TramiteCreateForm: React.FC<TramiteCreateFormProps> = ({
           </Alert>
         ) : (
           <form onSubmit={formik.handleSubmit}>
+            <div
+              style={{
+                display: 'none',
+                opacity: 0,
+                position: 'absolute',
+                left: '-9999px',
+                height: 0,
+                width: 0,
+                overflow: 'hidden',
+              }}
+              aria-hidden="true"
+            >
+              <label htmlFor="tramite-website-hp">Sitio Web Corporativo</label>
+              <input
+                id="tramite-website-hp"
+                name="website"
+                type="text"
+                value={formik.values.website || ''}
+                onChange={formik.handleChange}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <TextField

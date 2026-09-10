@@ -5,14 +5,9 @@ import { Box, Typography, Button } from '@mui/material';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import Link from 'next/link';
 
-interface EmptyStateProps {
-  title?: string;
-  description?: string;
-  actionText?: string;
-  actionHref?: string;
-  onAction?: () => void;
-  icon?: React.ReactNode;
-}
+import { EmptyStateProps } from '../../interfaces/feedback.interface';
+
+export type { EmptyStateProps };
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   title = 'No se encontraron trámites',

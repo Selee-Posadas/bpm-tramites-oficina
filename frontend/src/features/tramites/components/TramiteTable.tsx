@@ -17,20 +17,11 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Link from 'next/link';
-import { TramiteResumen } from '../interfaces/tramite.interface';
+import { TramiteResumen, TramiteTableProps } from '../interfaces/tramite.interface';
 import { EstadoBadge } from '../../../shared/components/Badges/EstadoBadge';
 import { PrioridadBadge } from '../../../shared/components/Badges/PrioridadBadge';
 import { SlaBadge } from '../../../shared/components/Badges/SlaBadge';
 import { EmptyState } from '../../../shared/components/Feedback/EmptyState';
-
-interface TramiteTableProps {
-  tramites: TramiteResumen[];
-  total: number;
-  skip: number;
-  take: number;
-  onPageChange: (newPage: number) => void;
-  basePath?: string;
-}
 
 export const TramiteTable: React.FC<TramiteTableProps> = ({
   tramites,

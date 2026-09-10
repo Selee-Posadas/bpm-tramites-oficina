@@ -1,4 +1,11 @@
-import { SlaInfoProps } from '../../../shared/components/Badges/SlaBadge';
+export interface ApiSlaResponseDto {
+  estaVencido?: boolean;
+  vencido?: boolean;
+  minutosRestantes?: number;
+  horasRestantes?: number;
+  porcentajeConsumido: number;
+  fechaLimite?: string | Date;
+}
 
 export interface TramiteItemResponseDto {
   id: string;
@@ -18,7 +25,7 @@ export interface TramiteItemResponseDto {
   fechaCreacion: string | Date;
   fechaActualizacion: string | Date;
   fechaCierre?: string | Date | null;
-  sla: SlaInfoProps;
+  sla: ApiSlaResponseDto;
 }
 
 export interface ListarTramitesResponseDto {
@@ -81,7 +88,7 @@ export interface TramiteDetalleResponseDto {
   fechaCreacion: string | Date;
   fechaActualizacion: string | Date;
   fechaCierre?: string | Date | null;
-  sla: SlaInfoProps;
+  sla: ApiSlaResponseDto;
   movimientos: MovimientoResponseDto[];
   documentos: DocumentoResponseDto[];
   comentarios: ComentarioResponseDto[];
@@ -93,6 +100,7 @@ export interface CreateTramiteRequestDto {
   descripcion: string;
   prioridad: 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
   usuarioExternoId?: string;
+  website?: string;
 }
 
 export interface WorkflowTransitionResponseDto {

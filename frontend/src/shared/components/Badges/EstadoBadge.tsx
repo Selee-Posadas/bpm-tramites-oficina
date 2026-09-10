@@ -3,23 +3,9 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
 
-export type EstadoTramite =
-  | 'BORRADOR'
-  | 'INGRESADO'
-  | 'EN_REVISION'
-  | 'OBSERVADO'
-  | 'DERIVADO'
-  | 'ESPERANDO_EXTERNO'
-  | 'ESPERANDO_INTERNO'
-  | 'APROBADO'
-  | 'RECHAZADO'
-  | 'CERRADO'
-  | 'CANCELADO';
+import { EstadoBadgeProps, EstadoTramite } from '../../interfaces/badges.interface';
 
-interface EstadoBadgeProps {
-  estado: EstadoTramite | string;
-  size?: ChipProps['size'];
-}
+export type { EstadoBadgeProps, EstadoTramite };
 
 const estadoConfig: Record<
   string,

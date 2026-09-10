@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { AuthUser, RolInterno, TipoUsuario } from '../../features/auth/interfaces/auth.interface';
 import { AuthActions } from '../../features/auth/actions/auth.actions';
 import {
@@ -29,6 +30,7 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -36,9 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+        const currentPath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
 
-        if (pathname.startsWith('/interno')) {
+        if (currentPath.startsWith('/interno')) {
           const storedToken = getCookie(COOKIE_INTERNAL_TOKEN);
           const storedUserStr = getCookie(COOKIE_INTERNAL_USER);
 
@@ -46,15 +48,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(storedToken);
             try {
               const parsedUser: AuthUser = JSON.parse(storedUserStr);
+              if (parsedUser.tipo !== TipoUsuario.INTERNO) {
+                throw new Error('Tipo de usuario inválido para portal interno');
+              }
               setUser(parsedUser);
               const me = await AuthActions.getInternalMe();
               setUser(me);
               setCookie(COOKIE_INTERNAL_USER, JSON.stringify(me));
             } catch {
-              // Si falla me, mantener parsedUser si es offline o resetear
+              removeCookie(COOKIE_INTERNAL_TOKEN);
+              removeCookie(COOKIE_INTERNAL_USER);
+              setToken(null);
+              setUser(null);
             }
+          } else {
+            removeCookie(COOKIE_INTERNAL_TOKEN);
+            removeCookie(COOKIE_INTERNAL_USER);
+            setToken(null);
+            setUser(null);
           }
-        } else if (pathname.startsWith('/externo')) {
+        } else if (currentPath.startsWith('/externo')) {
           const storedToken = getCookie(COOKIE_EXTERNAL_TOKEN);
           const storedUserStr = getCookie(COOKIE_EXTERNAL_USER);
 
@@ -62,13 +75,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(storedToken);
             try {
               const parsedUser: AuthUser = JSON.parse(storedUserStr);
+              if (parsedUser.tipo !== TipoUsuario.EXTERNO) {
+                throw new Error('Tipo de usuario inválido para portal externo');
+              }
               setUser(parsedUser);
               const me = await AuthActions.getExternalMe();
               setUser(me);
               setCookie(COOKIE_EXTERNAL_USER, JSON.stringify(me));
             } catch {
-              // Si falla me
+              removeCookie(COOKIE_EXTERNAL_TOKEN);
+              removeCookie(COOKIE_EXTERNAL_USER);
+              setToken(null);
+              setUser(null);
             }
+          } else {
+            removeCookie(COOKIE_EXTERNAL_TOKEN);
+            removeCookie(COOKIE_EXTERNAL_USER);
+            setToken(null);
+            setUser(null);
           }
         }
       } catch (err) {
@@ -79,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
-  }, []);
+  }, [pathname]);
 
   const loginInternal = useCallback(async (email: string, rol?: string, azureObjectId?: string) => {
     setIsLoading(true);

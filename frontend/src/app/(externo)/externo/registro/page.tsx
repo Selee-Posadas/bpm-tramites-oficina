@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -15,17 +15,22 @@ import {
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useNotification } from '@/shared/context/NotificationContext';
+import { TipoUsuario } from '@/features/auth/interfaces/auth.interface';
 
 export default function ExternoRegistroPage() {
-  const router = useRouter();
-  const { registerExternal, isLoading } = useAuth();
+  const { registerExternal, isLoading, isAuthenticated, user } = useAuth();
   const { showSuccess } = useNotification();
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.tipo === TipoUsuario.EXTERNO) {
+      window.location.href = '/externo/mis-tramites';
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   const formik = useFormik({
     initialValues: {
@@ -47,7 +52,7 @@ export default function ExternoRegistroPage() {
       try {
         await registerExternal(values);
         showSuccess('Registro completado exitosamente. ¡Bienvenido al portal!');
-        router.push('/externo/mis-tramites');
+        window.location.href = '/externo/mis-tramites';
       } catch (err: unknown) {
         setErrorMsg('No se pudo completar el registro. Es posible que el correo ya esté registrado.');
       }

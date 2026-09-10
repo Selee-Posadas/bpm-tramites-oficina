@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Button, Paper, Typography, CircularProgress, MenuItem, TextField } from '@mui/material';
+import { Box, Button, Paper, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import PanToolIcon from '@mui/icons-material/PanTool';
@@ -14,44 +14,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ReplyIcon from '@mui/icons-material/Reply';
 
-import { TramiteDetalle } from '../interfaces/tramite.interface';
-import { AuthUser, RolInterno, TipoUsuario } from '../../auth/interfaces/auth.interface';
-import { Area } from '../../areas/interfaces/area.interface';
+import { WorkflowActionBarProps, WorkflowDialogType, WorkflowDialogConfigItem } from '../interfaces/tramite.interface';
+import { RolInterno, TipoUsuario } from '../../auth/interfaces/auth.interface';
 import { ConfirmDialog } from '../../../shared/components/Feedback/ConfirmDialog';
-
-interface WorkflowActionBarProps {
-  tramite: TramiteDetalle;
-  user: AuthUser | null;
-  areas?: Area[];
-  isActionLoading?: boolean;
-  onIngresar: () => Promise<boolean>;
-  onTomar: () => Promise<boolean>;
-  onAsignar: (operadorId: string, motivo?: string) => Promise<boolean>;
-  onDerivar: (areaDestinoId: string, motivo?: string) => Promise<boolean>;
-  onObservar: (motivo: string) => Promise<boolean>;
-  onResponderObservacion: (respuesta: string) => Promise<boolean>;
-  onSolicitarIntervencionExterna: (motivo: string) => Promise<boolean>;
-  onResponderIntervencionExterna: (respuesta: string) => Promise<boolean>;
-  onAprobar: (motivo?: string) => Promise<boolean>;
-  onRechazar: (motivo: string) => Promise<boolean>;
-  onCerrar: (motivo?: string) => Promise<boolean>;
-  onCancelar: (motivo: string) => Promise<boolean>;
-}
-
-type DialogType =
-  | 'INGRESAR'
-  | 'TOMAR'
-  | 'ASIGNAR'
-  | 'DERIVAR'
-  | 'OBSERVAR'
-  | 'RESPONDER_OBSERVACION'
-  | 'SOLICITAR_INTERVENCION'
-  | 'RESPONDER_INTERVENCION'
-  | 'APROBAR'
-  | 'RECHAZAR'
-  | 'CERRAR'
-  | 'CANCELAR'
-  | null;
+import { DerivarModal } from './DerivarModal';
 
 export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
   tramite,
@@ -71,11 +37,7 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
   onCerrar,
   onCancelar,
 }) => {
-  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
-  const [selectedAreaId, setSelectedAreaId] = useState<string>('');
-  const [selectedOperadorId, setSelectedOperadorId] = useState<string>('');
-  const [areaError, setAreaError] = useState<string>('');
-  const [operadorError, setOperadorError] = useState<string>('');
+  const [activeDialog, setActiveDialog] = useState<WorkflowDialogType>(null);
 
   if (!user) return null;
 
@@ -83,18 +45,111 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
   const isExterno = user.tipo === TipoUsuario.EXTERNO;
   const rol = user.rolInterno;
 
-  const isAuditor = rol === RolInterno.AUDITOR;
-  if (isAuditor) {
+  if (rol === RolInterno.AUDITOR) {
     return (
       <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', mt: 3 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          Perfil de solo lectura (Auditor): No posee permisos para ejecutar transiciones operativas sobre este trámite.
+        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center' }}>
+          Vista de solo lectura (Rol Auditor). No cuenta con permisos para ejecutar transiciones operativas sobre este trámite.
         </Typography>
       </Paper>
     );
   }
 
   const estado = tramite.estado;
+  const isCircuitoExternoInterno = tramite.origen === 'EXTERNO_INTERNO' || tramite.origen === 'EXTERNO';
+  const isCircuitoInternoInterno = tramite.origen === 'INTERNO_INTERNO';
+  const isCircuitoInternoExterno = tramite.origen === 'INTERNO_EXTERNO';
+
+  const dialogConfigs: Record<string, WorkflowDialogConfigItem> = {
+    INGRESAR: {
+      title: 'Ingresar Trámite',
+      description: '¿Confirma el ingreso formal del trámite para su revisión operativa?',
+      confirmText: 'Ingresar',
+      confirmColor: 'primary',
+      execute: () => onIngresar(),
+    },
+    TOMAR: {
+      title: 'Tomar Trámite',
+      description: 'Al tomar este trámite, usted quedará asignado como operador responsable de su gestión.',
+      confirmText: 'Tomar',
+      confirmColor: 'primary',
+      execute: () => onTomar(),
+    },
+    APROBAR: {
+      title: 'Aprobar Trámite',
+      description: '¿Confirma la resolución favorable y aprobación formal del trámite?',
+      confirmText: 'Aprobar Trámite',
+      confirmColor: 'success',
+      requireReason: true,
+      reasonLabel: 'Dictamen / Motivo de Aprobación',
+      execute: (motivo) => onAprobar(motivo),
+    },
+    RECHAZAR: {
+      title: 'Rechazar Trámite',
+      description: 'Esta acción rechazará el trámite indicando los fundamentos al solicitante.',
+      confirmText: 'Rechazar Trámite',
+      confirmColor: 'error',
+      requireReason: true,
+      reasonLabel: 'Fundamento del Rechazo (Obligatorio)',
+      execute: (motivo) => onRechazar(motivo || ''),
+    },
+    OBSERVAR: {
+      title: 'Observar Trámite',
+      description: 'El trámite pasará a estado OBSERVADO y se requerirá una subsanación al solicitante.',
+      confirmText: 'Enviar Observación',
+      confirmColor: 'warning',
+      requireReason: true,
+      reasonLabel: 'Detalle de la Observación (Obligatorio)',
+      execute: (motivo) => onObservar(motivo || ''),
+    },
+    RESPONDER_OBSERVACION: {
+      title: 'Responder a la Observación',
+      description: 'Ingrese su descargo o aclaración para que el operador continúe con la revisión.',
+      confirmText: 'Enviar Descargo',
+      confirmColor: 'warning',
+      requireReason: true,
+      reasonLabel: 'Respuesta / Aclaración (Obligatorio)',
+      execute: (resp) => onResponderObservacion(resp || ''),
+    },
+    SOLICITAR_INTERVENCION: {
+      title: 'Solicitar Intervención Externa',
+      description: 'El trámite pasará a ESPERANDO_EXTERNO solicitando documentación o respuesta adicional.',
+      confirmText: 'Solicitar Intervención',
+      confirmColor: 'info',
+      requireReason: true,
+      reasonLabel: 'Requerimiento para el externo (Obligatorio)',
+      execute: (motivo) => onSolicitarIntervencionExterna(motivo || ''),
+    },
+    RESPONDER_INTERVENCION: {
+      title: 'Responder Intervención Externa',
+      description: 'Envíe su respuesta o confirmación del requerimiento solicitado.',
+      confirmText: 'Responder',
+      confirmColor: 'info',
+      requireReason: true,
+      reasonLabel: 'Respuesta al Requerimiento (Obligatorio)',
+      execute: (resp) => onResponderIntervencionExterna(resp || ''),
+    },
+    CERRAR: {
+      title: 'Cerrar Trámite',
+      description: 'Se archivará y finalizará el ciclo de vida del trámite de manera definitiva.',
+      confirmText: 'Cerrar Trámite',
+      confirmColor: 'primary',
+      requireReason: false,
+      reasonLabel: 'Nota de Cierre (Opcional)',
+      execute: (motivo) => onCerrar(motivo),
+    },
+    CANCELAR: {
+      title: 'Cancelar Trámite',
+      description: '¿Está seguro de que desea cancelar este trámite? Esta acción es irreversible.',
+      confirmText: 'Cancelar Trámite',
+      confirmColor: 'error',
+      requireReason: true,
+      reasonLabel: 'Motivo de la Cancelación (Obligatorio)',
+      execute: (motivo) => onCancelar(motivo || ''),
+    },
+  };
+
+  const currentConfig = activeDialog && activeDialog !== 'DERIVAR' ? dialogConfigs[activeDialog] : null;
 
   return (
     <Paper
@@ -138,7 +193,25 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
         </Button>
       )}
 
-      {isInterno && estado === 'BORRADOR' && (
+      {isExterno && estado === 'BORRADOR' && (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<SendIcon />}
+          onClick={() => setActiveDialog('INGRESAR')}
+          disabled={isActionLoading}
+        >
+          Ingresar Trámite
+        </Button>
+      )}
+
+      {isInterno && estado === 'BORRADOR' && isCircuitoExternoInterno && (
+        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', px: 1 }}>
+          Trámite en preparación por el solicitante externo. El ingreso formal debe ser efectuado por el usuario externo.
+        </Typography>
+      )}
+
+      {isInterno && estado === 'BORRADOR' && !isCircuitoExternoInterno && (
         <Button
           variant="contained"
           color="primary"
@@ -159,6 +232,18 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
           disabled={isActionLoading}
         >
           Tomar Trámite
+        </Button>
+      )}
+
+      {isInterno && estado === 'INGRESADO' && isCircuitoInternoExterno && (
+        <Button
+          variant="contained"
+          color="info"
+          startIcon={<ContactSupportIcon />}
+          onClick={() => setActiveDialog('SOLICITAR_INTERVENCION')}
+          disabled={isActionLoading}
+        >
+          Solicitar Intervención Externa
         </Button>
       )}
 
@@ -184,48 +269,42 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
             Rechazar
           </Button>
 
-          <Button
-            variant="outlined"
-            color="warning"
-            startIcon={<VisibilityOffIcon />}
-            onClick={() => setActiveDialog('OBSERVAR')}
-            disabled={isActionLoading}
-          >
-            Observar
-          </Button>
+          {isCircuitoExternoInterno && (
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<VisibilityOffIcon />}
+              onClick={() => setActiveDialog('OBSERVAR')}
+              disabled={isActionLoading}
+            >
+              Observar
+            </Button>
+          )}
 
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<AltRouteIcon />}
-            onClick={() => setActiveDialog('DERIVAR')}
-            disabled={isActionLoading}
-          >
-            Derivar a Otra Área
-          </Button>
+          {isCircuitoInternoInterno && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<AltRouteIcon />}
+              onClick={() => setActiveDialog('DERIVAR')}
+              disabled={isActionLoading}
+            >
+              Derivar a Otra Área
+            </Button>
+          )}
 
-          <Button
-            variant="outlined"
-            color="info"
-            startIcon={<ContactSupportIcon />}
-            onClick={() => setActiveDialog('SOLICITAR_INTERVENCION')}
-            disabled={isActionLoading}
-          >
-            Solicitar Intervención Externa
-          </Button>
+          {isCircuitoInternoExterno && (
+            <Button
+              variant="outlined"
+              color="info"
+              startIcon={<ContactSupportIcon />}
+              onClick={() => setActiveDialog('SOLICITAR_INTERVENCION')}
+              disabled={isActionLoading}
+            >
+              Solicitar Intervención Externa
+            </Button>
+          )}
         </>
-      )}
-
-      {isInterno && (rol === RolInterno.SUPERVISOR || rol === RolInterno.ADMIN) && (
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<AssignmentIndIcon />}
-          onClick={() => setActiveDialog('ASIGNAR')}
-          disabled={isActionLoading}
-        >
-          Asignar a Operador
-        </Button>
       )}
 
       {isInterno && (estado === 'APROBADO' || estado === 'RECHAZADO' || estado === 'CANCELADO') && (
@@ -253,202 +332,38 @@ export const WorkflowActionBar: React.FC<WorkflowActionBarProps> = ({
         </Button>
       )}
 
-      <ConfirmDialog
-        open={activeDialog === 'INGRESAR'}
-        title="Ingresar Trámite"
-        description="¿Confirma el ingreso formal del trámite para su revisión operativa?"
-        confirmText="Ingresar"
-        confirmColor="primary"
-        isLoading={isActionLoading}
-        onConfirm={async () => {
-          await onIngresar();
-          setActiveDialog(null);
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'TOMAR'}
-        title="Tomar Trámite"
-        description="Al tomar este trámite, usted quedará asignado como operador responsable de su gestión."
-        confirmText="Tomar"
-        confirmColor="primary"
-        isLoading={isActionLoading}
-        onConfirm={async () => {
-          await onTomar();
-          setActiveDialog(null);
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'APROBAR'}
-        title="Aprobar Trámite"
-        description="¿Confirma la resolución favorable y aprobación formal del trámite?"
-        confirmText="Aprobar Trámite"
-        confirmColor="success"
-        requireReason
-        reasonLabel="Dictamen / Motivo de Aprobación"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          await onAprobar(motivo);
-          setActiveDialog(null);
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'RECHAZAR'}
-        title="Rechazar Trámite"
-        description="Esta acción rechazará el trámite indicando los fundamentos al solicitante."
-        confirmText="Rechazar Trámite"
-        confirmColor="error"
-        requireReason
-        reasonLabel="Fundamento del Rechazo (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          if (motivo) {
-            await onRechazar(motivo);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'OBSERVAR'}
-        title="Observar Trámite"
-        description="El trámite pasará a estado OBSERVADO y se requerirá una subsanación al solicitante."
-        confirmText="Enviar Observación"
-        confirmColor="warning"
-        requireReason
-        reasonLabel="Detalle de la Observación (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          if (motivo) {
-            await onObservar(motivo);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'RESPONDER_OBSERVACION'}
-        title="Responder a la Observación"
-        description="Ingrese su descargo o aclaración para que el operador continúe con la revisión."
-        confirmText="Enviar Descargo"
-        confirmColor="warning"
-        requireReason
-        reasonLabel="Respuesta / Aclaración (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (respuesta) => {
-          if (respuesta) {
-            await onResponderObservacion(respuesta);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'SOLICITAR_INTERVENCION'}
-        title="Solicitar Intervención Externa"
-        description="El trámite pasará a ESPERANDO_EXTERNO solicitando documentación o respuesta adicional."
-        confirmText="Solicitar Intervención"
-        confirmColor="info"
-        requireReason
-        reasonLabel="Requerimiento para el externo (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          if (motivo) {
-            await onSolicitarIntervencionExterna(motivo);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'RESPONDER_INTERVENCION'}
-        title="Responder Intervención Externa"
-        description="Envíe su respuesta o confirmación del requerimiento solicitado."
-        confirmText="Responder"
-        confirmColor="info"
-        requireReason
-        reasonLabel="Respuesta al Requerimiento (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (respuesta) => {
-          if (respuesta) {
-            await onResponderIntervencionExterna(respuesta);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'CERRAR'}
-        title="Cerrar Trámite"
-        description="Se archivará y finalizará el ciclo de vida del trámite de manera definitiva."
-        confirmText="Cerrar Trámite"
-        confirmColor="primary"
-        requireReason
-        reasonLabel="Nota de Cierre (Opcional)"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          await onCerrar(motivo);
-          setActiveDialog(null);
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      <ConfirmDialog
-        open={activeDialog === 'CANCELAR'}
-        title="Cancelar Trámite"
-        description="¿Está seguro de que desea cancelar este trámite? Esta acción es irreversible."
-        confirmText="Cancelar Trámite"
-        confirmColor="error"
-        requireReason
-        reasonLabel="Motivo de la Cancelación (Obligatorio)"
-        isLoading={isActionLoading}
-        onConfirm={async (motivo) => {
-          if (motivo) {
-            await onCancelar(motivo);
-            setActiveDialog(null);
-          }
-        }}
-        onClose={() => setActiveDialog(null)}
-      />
-
-      {activeDialog === 'DERIVAR' && (
+      {currentConfig && (
         <ConfirmDialog
           open={true}
-          title="Derivar Trámite a Otra Área"
-          description="Seleccione el área destino y el motivo de la derivación inter-área."
-          confirmText="Derivar Trámite"
-          confirmColor="secondary"
-          requireReason
-          reasonLabel="Motivo de la Derivación (Obligatorio)"
+          title={currentConfig.title}
+          description={currentConfig.description}
+          confirmText={currentConfig.confirmText}
+          confirmColor={currentConfig.confirmColor}
+          requireReason={currentConfig.requireReason}
+          reasonLabel={currentConfig.reasonLabel}
           isLoading={isActionLoading}
-          onConfirm={async (motivo) => {
-            if (!selectedAreaId) {
-              setAreaError('Debe seleccionar el área de destino');
-              return;
-            }
-            if (motivo) {
-              await onDerivar(selectedAreaId, motivo);
-              setActiveDialog(null);
-              setSelectedAreaId('');
-            }
-          }}
-          onClose={() => {
+          onConfirm={async (reason) => {
+            await currentConfig.execute(reason);
             setActiveDialog(null);
-            setSelectedAreaId('');
-            setAreaError('');
           }}
+          onClose={() => setActiveDialog(null)}
         />
       )}
+
+      <DerivarModal
+        open={activeDialog === 'DERIVAR'}
+        areas={areas}
+        areaActualId={tramite.areaActualId}
+        isLoading={isActionLoading}
+        onClose={() => setActiveDialog(null)}
+        onConfirm={async (areaDestinoId, motivo) => {
+          const ok = await onDerivar(areaDestinoId, motivo);
+          if (ok) {
+            setActiveDialog(null);
+          }
+          return ok;
+        }}
+      />
     </Paper>
   );
 };

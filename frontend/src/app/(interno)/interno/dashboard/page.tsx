@@ -23,6 +23,7 @@ import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { LoadingSkeleton } from '@/shared/components/Feedback/LoadingSkeleton';
 import { EstadoBadge } from '@/shared/components/Badges/EstadoBadge';
 import { PrioridadBadge } from '@/shared/components/Badges/PrioridadBadge';
+import { EstadoDistributionChart } from '@/features/dashboard/components/EstadoDistributionChart';
 
 export default function InternoDashboardPage() {
   const { stats, isLoading, error } = useDashboard();
@@ -51,10 +52,12 @@ export default function InternoDashboardPage() {
     );
   }
 
-  const enRevisionCount = stats.tramitesPorEstado['EN_REVISION'] || 0;
-  const enTerminoCount = stats.tramitesEnTerminoSla;
-  const vencidosCount = stats.tramitesVencidosSla;
-  const cumplimiento = stats.cumplimientoSlaPorcentaje;
+  const tramitesPorEstado = stats.tramitesPorEstado || {};
+  const tramitesPorPrioridad = stats.tramitesPorPrioridad || {};
+  const enRevisionCount = tramitesPorEstado['EN_REVISION'] || 0;
+  const enTerminoCount = stats.tramitesEnTerminoSla || 0;
+  const vencidosCount = stats.tramitesVencidosSla || 0;
+  const cumplimiento = stats.cumplimientoSlaPorcentaje || 0;
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -182,62 +185,56 @@ export default function InternoDashboardPage() {
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
-          <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+          <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, height: '100%' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2.5 }}>
                 Distribución de Trámites por Estado
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                {Object.entries(stats.tramitesPorEstado).map(([estado, cantidad]) => (
-                  <Paper
-                    key={estado}
-                    elevation={0}
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      border: '1px solid #e2e8f0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      minWidth: 160,
-                      flexGrow: 1,
-                    }}
-                  >
-                    <EstadoBadge estado={estado} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, ml: 'auto' }}>
-                      {cantidad}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Box>
+              <EstadoDistributionChart
+                estados={tramitesPorEstado}
+                total={stats.totalTramites}
+              />
             </CardContent>
           </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 5 }}>
-          <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
-            <CardContent>
+          <Card
+            elevation={0}
+            sx={{
+              border: '1px solid #e2e8f0',
+              borderRadius: 3,
+              height: 'fit-content',
+              bgcolor: '#ffffff',
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Trámites por Nivel de Prioridad
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {Object.entries(stats.tramitesPorPrioridad).map(([prioridad, cantidad]) => (
-                  <Box
-                    key={prioridad}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 1,
-                      borderBottom: '1px solid #f1f5f9',
-                    }}
-                  >
-                    <PrioridadBadge prioridad={prioridad} />
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      {cantidad}
-                    </Typography>
-                  </Box>
-                ))}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {(['BAJA', 'MEDIA', 'ALTA', 'URGENTE'] as const).map((p) => {
+                  const cantidad = tramitesPorPrioridad[p] ?? 0;
+                  return (
+                    <Box
+                      key={p}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        py: 1,
+                        px: 1,
+                        borderBottom: '1px solid #f1f5f9',
+                        '&:last-child': { borderBottom: 'none' },
+                      }}
+                    >
+                      <PrioridadBadge prioridad={p} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {cantidad}
+                      </Typography>
+                    </Box>
+                  );
+                })}
               </Box>
             </CardContent>
           </Card>

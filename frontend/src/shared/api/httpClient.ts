@@ -1,10 +1,13 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   getCookie,
+  removeCookie,
   COOKIE_INTERNAL_TOKEN,
+  COOKIE_INTERNAL_USER,
   COOKIE_EXTERNAL_TOKEN,
+  COOKIE_EXTERNAL_USER,
 } from '../utils/cookies.util';
-import { emitGlobalNotification } from '../context/NotificationContext';
+import { emitGlobalNotification, emitGlobalDialog } from '../context/NotificationContext';
 
 export interface ApiErrorResponse {
   statusCode: number;
@@ -66,16 +69,24 @@ httpClient.interceptors.response.use(
           emitGlobalNotification('Sesión inválida o expirada. Por favor inicie sesión nuevamente.', 'error');
           if (typeof window !== 'undefined') {
             const pathname = window.location.pathname;
-            if (pathname.startsWith('/interno') && pathname !== '/interno/login') {
-              window.location.href = '/interno/login';
-            } else if (pathname.startsWith('/externo') && pathname !== '/externo/login' && pathname !== '/externo/registro') {
-              window.location.href = '/externo/login';
+            if (pathname.startsWith('/interno')) {
+              removeCookie(COOKIE_INTERNAL_TOKEN);
+              removeCookie(COOKIE_INTERNAL_USER);
+              if (pathname !== '/interno/login') {
+                window.location.href = '/interno/login';
+              }
+            } else if (pathname.startsWith('/externo')) {
+              removeCookie(COOKIE_EXTERNAL_TOKEN);
+              removeCookie(COOKIE_EXTERNAL_USER);
+              if (pathname !== '/externo/login' && pathname !== '/externo/registro') {
+                window.location.href = '/externo/login';
+              }
             }
           }
           break;
 
         case 403:
-          emitGlobalNotification(mensaje || 'No tiene permisos para acceder o realizar esta acción.', 'warning');
+          emitGlobalDialog('Acceso no Autorizado', mensaje || 'No tiene permisos para acceder o realizar esta acción.', 'error');
           break;
 
         case 404:
@@ -83,7 +94,7 @@ httpClient.interceptors.response.use(
           break;
 
         case 422:
-          emitGlobalNotification(mensaje || 'La operación no cumple con las reglas de negocio del trámite.', 'error');
+          emitGlobalDialog('Regla de Trámite', mensaje || 'La operación no cumple con las reglas de negocio del trámite.', 'warning');
           break;
 
         case 500:

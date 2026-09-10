@@ -1,5 +1,7 @@
 import {
+  ApiSlaResponseDto,
   ComentarioResponseDto,
+  CreateTramiteRequestDto,
   DocumentoResponseDto,
   MovimientoResponseDto,
   TramiteDetalleResponseDto,
@@ -7,6 +9,7 @@ import {
 } from '../interfaces/tramite.api.interface';
 import {
   ComentarioItem,
+  CreateTramiteFormValues,
   DocumentoItem,
   MovimientoItem,
   TramiteDetalle,
@@ -33,12 +36,29 @@ export class TramiteAdapter {
       fechaCreacion: new Date(dto.fechaCreacion),
       fechaActualizacion: new Date(dto.fechaActualizacion),
       fechaCierre: dto.fechaCierre ? new Date(dto.fechaCierre) : null,
-      sla: dto.sla,
+      sla: TramiteAdapter.toSla(dto.sla),
+    };
+  }
+
+  static toSla(dto: ApiSlaResponseDto) {
+    const vencido = dto.vencido ?? dto.estaVencido ?? false;
+    const horasRestantes =
+      dto.horasRestantes !== undefined
+        ? dto.horasRestantes
+        : dto.minutosRestantes !== undefined
+          ? Math.round(dto.minutosRestantes / 60)
+          : 0;
+
+    return {
+      vencido,
+      horasRestantes,
+      porcentajeConsumido: dto.porcentajeConsumido ?? 0,
+      fechaLimite: dto.fechaLimite,
     };
   }
 
   static toResumenList(dtos: TramiteItemResponseDto[]): TramiteResumen[] {
-    return dtos.map(this.toResumen);
+    return dtos.map((dto) => TramiteAdapter.toResumen(dto));
   }
 
   static toMovimiento(dto: MovimientoResponseDto): MovimientoItem {
@@ -101,10 +121,32 @@ export class TramiteAdapter {
       fechaCreacion: new Date(dto.fechaCreacion),
       fechaActualizacion: new Date(dto.fechaActualizacion),
       fechaCierre: dto.fechaCierre ? new Date(dto.fechaCierre) : null,
-      sla: dto.sla,
-      movimientos: (dto.movimientos || []).map(this.toMovimiento),
-      documentos: (dto.documentos || []).map(this.toDocumento),
-      comentarios: (dto.comentarios || []).map(this.toComentario),
+      sla: TramiteAdapter.toSla(dto.sla),
+      movimientos: (dto.movimientos || []).map((m) => TramiteAdapter.toMovimiento(m)),
+      documentos: (dto.documentos || []).map((d) => TramiteAdapter.toDocumento(d)),
+      comentarios: (dto.comentarios || []).map((c) => TramiteAdapter.toComentario(c)),
     };
+  }
+
+  static toCreatePayload(
+    values: CreateTramiteFormValues,
+    isInternal = false,
+  ): CreateTramiteRequestDto {
+    const payload: CreateTramiteRequestDto = {
+      tipoTramiteId: values.tipoTramiteId,
+      titulo: values.titulo.trim(),
+      descripcion: values.descripcion.trim(),
+      prioridad: values.prioridad,
+    };
+
+    if (isInternal && values.usuarioExternoId && values.usuarioExternoId.trim() !== '') {
+      payload.usuarioExternoId = values.usuarioExternoId.trim();
+    }
+
+    if (values.website && values.website.trim() !== '') {
+      payload.website = values.website.trim();
+    }
+
+    return payload;
   }
 }

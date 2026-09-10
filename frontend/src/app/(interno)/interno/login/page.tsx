@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Container,
   Box,
@@ -18,9 +19,8 @@ import {
 import BusinessIcon from '@mui/icons-material/Business';
 import LoginIcon from '@mui/icons-material/Login';
 import KeyIcon from '@mui/icons-material/Key';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/shared/context/AuthContext';
-import { RolInterno } from '@/features/auth/interfaces/auth.interface';
+import { RolInterno, TipoUsuario } from '@/features/auth/interfaces/auth.interface';
 
 const mockUsers = [
   { email: 'admin@bpm.local', nombre: 'Admin General', rol: RolInterno.ADMIN, desc: 'Control total del sistema y catálogos' },
@@ -31,8 +31,7 @@ const mockUsers = [
 ];
 
 export default function InternoLoginPage() {
-  const router = useRouter();
-  const { loginInternal, isLoading } = useAuth();
+  const { loginInternal, isLoading, isAuthenticated, user } = useAuth();
   const [customEmail, setCustomEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -40,7 +39,9 @@ export default function InternoLoginPage() {
     setErrorMsg('');
     try {
       await loginInternal(email, rol);
-      router.push('/interno/dashboard');
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirect = searchParams.get('redirect') || '/interno/dashboard';
+      window.location.href = redirect;
     } catch (err: unknown) {
       setErrorMsg('No se pudo autenticar con el usuario seleccionado. Verifique que el backend esté operativo.');
     }
@@ -60,6 +61,26 @@ export default function InternoLoginPage() {
                 Emulación segura OIDC / Azure Entra ID para entorno de evaluación y desarrollo
               </Typography>
             </Box>
+
+            {isAuthenticated && user && user.tipo === TipoUsuario.INTERNO && (
+              <Alert
+                severity="info"
+                sx={{ mb: 3 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    component={Link}
+                    href="/interno/dashboard"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Ir al Dashboard
+                  </Button>
+                }
+              >
+                Sesión activa actual: <strong>{user.nombre}</strong> ({user.rolInterno}). Puede continuar o seleccionar otro perfil abajo para cambiar de usuario:
+              </Alert>
+            )}
 
             {errorMsg && (
               <Alert severity="error" sx={{ mb: 3 }}>

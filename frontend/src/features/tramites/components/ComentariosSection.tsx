@@ -17,15 +17,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PublicIcon from '@mui/icons-material/Public';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { ComentarioItem } from '../interfaces/tramite.interface';
+import { ComentarioItem, ComentariosSectionProps } from '../interfaces/tramite.interface';
 import { AuthUser, TipoUsuario } from '../../auth/interfaces/auth.interface';
-
-interface ComentariosSectionProps {
-  comentarios: ComentarioItem[];
-  user: AuthUser | null;
-  isLoading?: boolean;
-  onAgregarComentario: (mensaje: string, visibilidad: 'INTERNA' | 'EXTERNA' | 'TODOS') => Promise<boolean>;
-}
 
 export const ComentariosSection: React.FC<ComentariosSectionProps> = ({
   comentarios,

@@ -3,12 +3,9 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
 
-export type PrioridadTramite = 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
+import { PrioridadBadgeProps, PrioridadTramite } from '../../interfaces/badges.interface';
 
-interface PrioridadBadgeProps {
-  prioridad: PrioridadTramite | string;
-  size?: ChipProps['size'];
-}
+export type { PrioridadBadgeProps, PrioridadTramite };
 
 const prioridadConfig: Record<string, { label: string; color: ChipProps['color']; variant?: ChipProps['variant'] }> = {
   BAJA: { label: 'Baja', color: 'default' },

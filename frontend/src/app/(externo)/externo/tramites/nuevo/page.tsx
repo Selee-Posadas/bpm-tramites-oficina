@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTiposTramite } from '@/features/tipos-tramite/hooks/useTiposTramite';
 import { TramiteCreateForm } from '@/features/tramites/components/TramiteCreateForm';
 import { TramiteActions } from '@/features/tramites/actions/tramite.actions';
-import { CreateTramiteFormValues } from '@/features/tramites/interfaces/tramite.interface';
+import { CreateTramiteRequestDto } from '@/features/tramites/interfaces/tramite.api.interface';
 import { useNotification } from '@/shared/context/NotificationContext';
 import { LoadingSkeleton } from '@/shared/components/Feedback/LoadingSkeleton';
 
@@ -18,7 +18,7 @@ export default function NuevoTramiteExternoPage() {
 
   const tiposPermitidos = tiposTramite.filter((t) => t.permiteInicioExterno);
 
-  const handleSubmit = async (values: CreateTramiteFormValues) => {
+  const handleSubmit = async (values: CreateTramiteRequestDto) => {
     setIsSubmitting(true);
     try {
       const result = await TramiteActions.crear(values);
