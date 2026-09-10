@@ -16,6 +16,7 @@ import {
   Box,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TramiteResumen, TramiteTableProps } from '../interfaces/tramite.interface';
 import { EstadoBadge } from '../../../shared/components/Badges/EstadoBadge';
@@ -31,6 +32,8 @@ export const TramiteTable: React.FC<TramiteTableProps> = ({
   onPageChange,
   basePath = '/interno/tramites',
 }) => {
+  const router = useRouter();
+
   if (tramites.length === 0) {
     return <EmptyState title="No hay trámites para mostrar" description="No se encontraron trámites con los filtros actuales." />;
   }
@@ -68,10 +71,8 @@ export const TramiteTable: React.FC<TramiteTableProps> = ({
                   sx={{
                     '&:last-child td, &:last-child th': { border: 0 },
                     cursor: 'pointer',
-                    textDecoration: 'none',
                   }}
-                  component={Link}
-                  href={`${basePath}/${row.id}`}
+                  onClick={() => router.push(`${basePath}/${row.id}`)}
                 >
                   <TableCell component="th" scope="row" sx={{ fontWeight: 700, color: 'primary.main' }}>
                     {row.numero}
