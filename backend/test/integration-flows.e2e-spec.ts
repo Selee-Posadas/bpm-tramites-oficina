@@ -1,6 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { AuthExternalService } from '../src/modules/auth/application/auth-external.service';
 import { AuthInternalService } from '../src/modules/auth/application/auth-internal.service';
 import { CrearTramiteUseCase } from '../src/modules/tramites/application/use-cases/crear-tramite.use-case';
@@ -22,7 +21,6 @@ import { OrigenTramite } from '../src/modules/tramites/domain/enums/origen-trami
 import { TipoUsuario } from '../src/modules/tramites/domain/enums/tipo-usuario.enum';
 import { PrioridadTramite } from '../src/modules/tramites/domain/enums/prioridad-tramite.enum';
 import { RolInterno } from '../src/modules/usuarios/domain/enums/rol-interno.enum';
-import { EstadoUsuarioExterno } from '../src/modules/usuarios/domain/enums/estado-usuario-externo.enum';
 import { ITramiteRepository } from '../src/modules/tramites/domain/repositories/tramite.repository.interface';
 import { IMovimientoTramiteRepository } from '../src/modules/tramites/domain/repositories/movimiento-tramite.repository.interface';
 import { ITipoTramiteRepository } from '../src/modules/tipos-tramite/domain/repositories/tipo-tramite.repository.interface';
@@ -35,7 +33,6 @@ import {
 import { AuthenticatedUser } from '../src/modules/auth/domain/auth-user.interface';
 
 describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () => {
-  // In-Memory state for testing integrated flow
   const tramitesStore = new Map<string, Tramite>();
   const movimientosStore: MovimientoTramite[] = [];
   const usuariosExternosStore = new Map<string, UsuarioExterno>();
@@ -61,7 +58,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   let aprobarTramiteUseCase: AprobarTramiteUseCase;
   let tramiteOwnershipGuard: TramiteOwnershipGuard;
 
-  // Variables shared across the sequential integration lifecycle
   let externalToken = '';
   let externalUserId = '';
   let createdTramiteId = '';
@@ -71,11 +67,11 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   beforeAll(async () => {
     jwtService = new JwtService({ secret: 'super-secret-integration-key' });
 
-    // 1. Configurar Repositorios In-Memory con Semántica de Producción
     tramiteRepo = {
       findById: jest.fn(async (id: string) => tramitesStore.get(id) || null),
-      findByNumero: jest.fn(async (num: string) =>
-        Array.from(tramitesStore.values()).find((t) => t.numero === num) || null,
+      findByNumero: jest.fn(
+        async (num: string) =>
+          Array.from(tramitesStore.values()).find((t) => t.numero === num) || null,
       ),
       findAll: jest.fn(async () => ({
         tramites: Array.from(tramitesStore.values()),
@@ -91,7 +87,11 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       }),
       updateIfUnassigned: jest.fn(async (tramite: Tramite) => {
         const existing = tramitesStore.get(tramite.id);
-        if (existing && existing.usuarioAsignadoId && existing.usuarioAsignadoId !== tramite.usuarioAsignadoId) {
+        if (
+          existing &&
+          existing.usuarioAsignadoId &&
+          existing.usuarioAsignadoId !== tramite.usuarioAsignadoId
+        ) {
           throw new ConcurrencyConflictException('El trámite ya fue tomado por otro operador');
         }
         tramitesStore.set(tramite.id, tramite);
@@ -100,15 +100,13 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       delete: jest.fn(async (id: string) => {
         tramitesStore.delete(id);
       }),
-      countByEstado: jest.fn(async () => ({} as Record<EstadoTramite, number>)),
-      countByOrigen: jest.fn(async () => ({} as Record<OrigenTramite, number>)),
-      countByArea: jest.fn(async () => ([] as Array<{ areaId: string; cantidad: number }>)),
+      countByEstado: jest.fn(async () => ({}) as Record<EstadoTramite, number>),
+      countByOrigen: jest.fn(async () => ({}) as Record<OrigenTramite, number>),
+      countByArea: jest.fn(async () => [] as Array<{ areaId: string; cantidad: number }>),
     };
 
     movimientoRepo = {
-      findById: jest.fn(async (id: string) =>
-        movimientosStore.find((m) => m.id === id) || null,
-      ),
+      findById: jest.fn(async (id: string) => movimientosStore.find((m) => m.id === id) || null),
       findByTramiteId: jest.fn(async (tramiteId: string) =>
         movimientosStore.filter((m) => m.tramiteId === tramiteId),
       ),
@@ -121,8 +119,9 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
 
     tipoTramiteRepo = {
       findById: jest.fn(async (id: string) => tiposTramiteStore.get(id) || null),
-      findByCodigo: jest.fn(async (cod: string) =>
-        Array.from(tiposTramiteStore.values()).find((t) => t.codigo === cod) || null,
+      findByCodigo: jest.fn(
+        async (cod: string) =>
+          Array.from(tiposTramiteStore.values()).find((t) => t.codigo === cod) || null,
       ),
       findAll: jest.fn(async () => Array.from(tiposTramiteStore.values())),
       save: jest.fn(async (t: TipoTramite) => {
@@ -137,19 +136,22 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
 
     usuarioRepo = {
       findAllInternos: jest.fn(async () => Array.from(usuariosInternosStore.values())),
-      findExternoByEmail: jest.fn(async (email: string) =>
-        Array.from(usuariosExternosStore.values()).find((u) => u.email === email) || null,
+      findExternoByEmail: jest.fn(
+        async (email: string) =>
+          Array.from(usuariosExternosStore.values()).find((u) => u.email === email) || null,
       ),
       findExternoById: jest.fn(async (id: string) => usuariosExternosStore.get(id) || null),
       saveExterno: jest.fn(async (u: UsuarioExterno) => {
         usuariosExternosStore.set(u.id, u);
         return u;
       }),
-      findInternoByEmail: jest.fn(async (email: string) =>
-        Array.from(usuariosInternosStore.values()).find((u) => u.email === email) || null,
+      findInternoByEmail: jest.fn(
+        async (email: string) =>
+          Array.from(usuariosInternosStore.values()).find((u) => u.email === email) || null,
       ),
-      findInternoByRol: jest.fn(async (rol: RolInterno) =>
-        Array.from(usuariosInternosStore.values()).find((u) => u.rol === rol) || null,
+      findInternoByRol: jest.fn(
+        async (rol: RolInterno) =>
+          Array.from(usuariosInternosStore.values()).find((u) => u.rol === rol) || null,
       ),
       findInternoById: jest.fn(async (id: string) => usuariosInternosStore.get(id) || null),
       saveInterno: jest.fn(async (u: UsuarioInterno) => {
@@ -160,8 +162,9 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
 
     areaRepo = {
       findById: jest.fn(async (id: string) => areasStore.get(id) || null),
-      findByCodigo: jest.fn(async (cod: string) =>
-        Array.from(areasStore.values()).find((a) => a.codigo === cod) || null,
+      findByCodigo: jest.fn(
+        async (cod: string) =>
+          Array.from(areasStore.values()).find((a) => a.codigo === cod) || null,
       ),
       findAll: jest.fn(async () => Array.from(areasStore.values())),
       save: jest.fn(async (a: Area) => {
@@ -174,7 +177,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       }),
     };
 
-    // 2. Sembrar tipos y áreas requeridos para las pruebas de integración
     const areaLegales = new Area({
       id: legalesAreaId,
       nombre: 'Asuntos Legales',
@@ -206,7 +208,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     });
     usuariosInternosStore.set(operadorLegales.id, operadorLegales);
 
-    // 3. Instanciar Servicios y Casos de Uso
     authExternalService = new AuthExternalService(usuarioRepo, jwtService);
     authInternalService = new AuthInternalService(usuarioRepo, areaRepo, jwtService);
 
@@ -219,7 +220,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     tramiteOwnershipGuard = new TramiteOwnershipGuard(tramiteRepo);
   });
 
-  // Helper para simular ExecutionContext en Guards
   const createMockContext = (
     user: AuthenticatedUser,
     params: Record<string, string> = {},
@@ -235,12 +235,7 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     } as unknown as ExecutionContext;
   };
 
-  // =========================================================================
-  // INTEGRATION TESTS OBLIGATORIOS (Secuencia de 1 a 10)
-  // =========================================================================
-
   it('1. login externo: debe autenticar usuario externo con credenciales correctas y emitir JWT con claims', async () => {
-    // Registro
     const regResult = await authExternalService.register({
       nombre: 'Constructora del Norte S.A.',
       email: 'contacto@constructora.com',
@@ -252,7 +247,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     externalUserId = regResult.user.id;
     expect(externalUserId).toBeDefined();
 
-    // Login
     const loginResult = await authExternalService.login({
       email: 'contacto@constructora.com',
       password: 'PasswordSegura2026!',
@@ -270,7 +264,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   });
 
   it('2. crear trámite externo: debe crear trámite en BORRADOR e ingresarlo con registro de movimientos', async () => {
-    // Creación en BORRADOR
     const tramiteCreado = await crearTramiteUseCase.execute({
       tipoTramiteId: 'tipo-prov-1',
       titulo: 'Inscripción Proveedor Obra Pública',
@@ -286,7 +279,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     expect(tramiteCreado.areaActualId).toBe(legalesAreaId);
     createdTramiteId = tramiteCreado.id;
 
-    // Ingresar trámite al circuito (Borrador -> Ingresado)
     const tramiteIngresado = await ingresarTramiteUseCase.execute({
       tramiteId: createdTramiteId,
       contexto: {
@@ -350,7 +342,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   });
 
   it('6. aprobar trámite: el operador toma nuevamente y aprueba el trámite pasando a APROBADO', async () => {
-    // Tomar nuevamente (INGRESADO -> EN_REVISION)
     await tomarTramiteUseCase.execute({
       tramiteId: createdTramiteId,
       contexto: {
@@ -361,7 +352,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       },
     });
 
-    // Aprobar (EN_REVISION -> APROBADO)
     const tramiteAprobado = await aprobarTramiteUseCase.execute({
       tramiteId: createdTramiteId,
       motivo: 'Documentación legal conforme y verificada',
@@ -390,7 +380,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
     expect(accionesRegistradas).toContain(AccionWorkflow.RESPONDER_OBSERVACION);
     expect(accionesRegistradas).toContain(AccionWorkflow.APROBAR);
 
-    // Validar inmutabilidad y orden temporal
     for (let i = 0; i < historial.length - 1; i++) {
       expect(historial[i].fecha.getTime()).toBeLessThanOrEqual(historial[i + 1].fecha.getTime());
     }
@@ -408,7 +397,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
 
     await expect(tramiteOwnershipGuard.canActivate(context)).rejects.toThrow(ForbiddenException);
 
-    // Verificar que el dueño legítimo sí tiene acceso permitido
     const usuarioDuenio: AuthenticatedUser = {
       id: externalUserId,
       email: 'contacto@constructora.com',
@@ -421,7 +409,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   });
 
   it('9. validar 403 en acciones no permitidas: externos y auditores no pueden ejecutar transiciones operativas', async () => {
-    // 1. Externo intentando aprobar directamente un trámite
     await expect(
       aprobarTramiteUseCase.execute({
         tramiteId: createdTramiteId,
@@ -433,7 +420,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       }),
     ).rejects.toThrow(UnauthorizedActionException);
 
-    // 2. Operador de otra área intentando tomar un trámite ajeno
     const tramiteMesa = await crearTramiteUseCase.execute({
       tipoTramiteId: 'tipo-prov-1',
       titulo: 'Trámite Mesa',
@@ -460,7 +446,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
   });
 
   it('10. validar concurrencia al tomar trámite: debe evitar doble asignación concurrente mediante bloqueo/atomicidad', async () => {
-    // Crear un nuevo trámite e ingresarlo
     const tramiteConcurrencia = await crearTramiteUseCase.execute({
       tipoTramiteId: 'tipo-prov-1',
       titulo: 'Trámite Concurrencia Race Condition',
@@ -487,7 +472,6 @@ describe('Integration Tests Obligatorios (End-to-End Workflow & Security)', () =
       areaUsuarioId: legalesAreaId,
     };
 
-    // Disparar solicitudes concurrentes simultáneas
     const [resA, resB] = await Promise.allSettled([
       tomarTramiteUseCase.execute({ tramiteId: tramiteConcurrencia.id, contexto: opA }),
       tomarTramiteUseCase.execute({ tramiteId: tramiteConcurrencia.id, contexto: opB }),
