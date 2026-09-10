@@ -168,6 +168,43 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
         }),
       ).rejects.toThrow(BusinessRuleValidationException);
     });
+
+    it('debe crear exitosamente un trámite interno en BORRADOR y origen INTERNO_INTERNO', async () => {
+      const tipo = new TipoTramite({
+        id: 'tipo-int',
+        codigo: 'MEMO',
+        nombre: 'Memorando Interno',
+        descripcion: 'Desc',
+        activo: true,
+        requiereExterno: false,
+        permiteInicioExterno: false,
+        slaHoras: 24,
+        areaInicialId: 'area-compras',
+      });
+      tipoTramiteRepoMock.findById.mockResolvedValue(tipo);
+
+      const useCase = new CrearTramiteUseCase(
+        tramiteRepoMock,
+        tipoTramiteRepoMock,
+        movimientoRepoMock,
+      );
+
+      const result = await useCase.execute({
+        tipoTramiteId: 'tipo-int',
+        titulo: 'Memorando de Compra',
+        descripcion: 'Compra interna',
+        usuarioTipo: TipoUsuario.INTERNO,
+        usuarioId: 'op-1',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.estado).toBe(EstadoTramite.BORRADOR);
+      expect(result.origen).toBe(OrigenTramite.INTERNO_INTERNO);
+      expect(result.areaActualId).toBe('area-compras');
+      expect(result.creadoPorId).toBe('op-1');
+      expect(tramiteRepoMock.save).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
   });
 
   describe('TomarTramiteUseCase', () => {
@@ -330,6 +367,267 @@ describe('Casos de Uso de Aplicación (Domain Application Core)', () => {
             usuarioId: 'op-1',
             rolInterno: RolInterno.OPERADOR,
             areaUsuarioId: 'area-legales',
+          },
+        }),
+      ).rejects.toThrow(UnauthorizedActionException);
+    });
+  });
+
+  describe('ObservarTramiteUseCase', () => {
+    it('debe pasar el trámite a estado OBSERVADO y registrar movimiento', async () => {
+      const tramite = new Tramite({
+        id: 'tramite-obs-1',
+        numero: 'TRM-OBS-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Trámite a observar',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.MEDIA,
+        areaActualId: 'area-legales',
+        usuarioAsignadoId: 'op-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new ObservarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      const result = await useCase.execute({
+        tramiteId: 'tramite-obs-1',
+        motivo: 'Falta adjuntar constancia de inscripción en AFIP',
+        contexto: {
+          usuarioTipo: TipoUsuario.INTERNO,
+          usuarioId: 'op-1',
+          rolInterno: RolInterno.OPERADOR,
+          areaUsuarioId: 'area-legales',
+        },
+      });
+
+      expect(result.estado).toBe(EstadoTramite.OBSERVADO);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
+
+    it('debe rechazar la observación si el motivo está vacío', async () => {
+      const useCase = new ObservarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      await expect(
+        useCase.execute({
+          tramiteId: 'tramite-obs-1',
+          motivo: '   ',
+          contexto: {
+            usuarioTipo: TipoUsuario.INTERNO,
+            usuarioId: 'op-1',
+            rolInterno: RolInterno.OPERADOR,
+            areaUsuarioId: 'area-legales',
+          },
+        }),
+      ).rejects.toThrow(BusinessRuleValidationException);
+    });
+  });
+
+  describe('ResponderObservacionUseCase', () => {
+    it('debe responder la observación como externo y regresar el trámite a INGRESADO', async () => {
+      const tramite = new Tramite({
+        id: 'tramite-resp-1',
+        numero: 'TRM-RESP-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Trámite observado',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.OBSERVADO,
+        prioridad: PrioridadTramite.MEDIA,
+        areaActualId: 'area-legales',
+        usuarioExternoId: 'ext-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new ResponderObservacionUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      const result = await useCase.execute({
+        tramiteId: 'tramite-resp-1',
+        respuesta: 'Se adjuntó la constancia solicitada en la pestaña documentos',
+        contexto: {
+          usuarioTipo: TipoUsuario.EXTERNO,
+          usuarioId: 'ext-1',
+        },
+      });
+
+      expect(result.estado).toBe(EstadoTramite.INGRESADO);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
+
+    it('debe rechazar si un interno intenta responder como externo', async () => {
+      const useCase = new ResponderObservacionUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      await expect(
+        useCase.execute({
+          tramiteId: 'tramite-resp-1',
+          respuesta: 'Respuesta indebida',
+          contexto: {
+            usuarioTipo: TipoUsuario.INTERNO,
+            usuarioId: 'op-1',
+            rolInterno: RolInterno.OPERADOR,
+          },
+        }),
+      ).rejects.toThrow(UnauthorizedActionException);
+    });
+  });
+
+  describe('AprobarTramiteUseCase', () => {
+    it('debe aprobar el trámite y pasar a APROBADO', async () => {
+      const tramite = new Tramite({
+        id: 'tramite-apr-1',
+        numero: 'TRM-APR-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Trámite a aprobar',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.MEDIA,
+        areaActualId: 'area-legales',
+        usuarioAsignadoId: 'op-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new AprobarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      const result = await useCase.execute({
+        tramiteId: 'tramite-apr-1',
+        motivo: 'Dictamen favorable emitido',
+        contexto: {
+          usuarioTipo: TipoUsuario.INTERNO,
+          usuarioId: 'op-1',
+          rolInterno: RolInterno.OPERADOR,
+          areaUsuarioId: 'area-legales',
+        },
+      });
+
+      expect(result.estado).toBe(EstadoTramite.APROBADO);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
+
+    it('debe rechazar si un externo intenta aprobar el trámite', async () => {
+      const useCase = new AprobarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      await expect(
+        useCase.execute({
+          tramiteId: 'tramite-apr-1',
+          contexto: {
+            usuarioTipo: TipoUsuario.EXTERNO,
+            usuarioId: 'ext-1',
+          },
+        }),
+      ).rejects.toThrow(UnauthorizedActionException);
+    });
+  });
+
+  describe('RechazarTramiteUseCase', () => {
+    it('debe rechazar el trámite con motivo obligatorio y pasar a RECHAZADO', async () => {
+      const tramite = new Tramite({
+        id: 'tramite-rech-1',
+        numero: 'TRM-RECH-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Trámite a rechazar',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.EN_REVISION,
+        prioridad: PrioridadTramite.MEDIA,
+        areaActualId: 'area-legales',
+        usuarioAsignadoId: 'op-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new RechazarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      const result = await useCase.execute({
+        tramiteId: 'tramite-rech-1',
+        motivo: 'No cumple con los requisitos del pliego',
+        contexto: {
+          usuarioTipo: TipoUsuario.INTERNO,
+          usuarioId: 'op-1',
+          rolInterno: RolInterno.OPERADOR,
+          areaUsuarioId: 'area-legales',
+        },
+      });
+
+      expect(result.estado).toBe(EstadoTramite.RECHAZADO);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
+
+    it('debe exigir motivo no vacío al rechazar', async () => {
+      const useCase = new RechazarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      await expect(
+        useCase.execute({
+          tramiteId: 'tramite-rech-1',
+          motivo: '',
+          contexto: {
+            usuarioTipo: TipoUsuario.INTERNO,
+            usuarioId: 'op-1',
+            rolInterno: RolInterno.OPERADOR,
+            areaUsuarioId: 'area-legales',
+          },
+        }),
+      ).rejects.toThrow(BusinessRuleValidationException);
+    });
+  });
+
+  describe('CerrarTramiteUseCase', () => {
+    it('debe cerrar un trámite que se encuentra en estado APROBADO', async () => {
+      const tramite = new Tramite({
+        id: 'tramite-cerr-1',
+        numero: 'TRM-CERR-001',
+        tipoTramiteId: 'tipo-1',
+        titulo: 'Trámite listo para cerrar',
+        descripcion: 'Desc',
+        origen: OrigenTramite.EXTERNO_INTERNO,
+        estado: EstadoTramite.APROBADO,
+        prioridad: PrioridadTramite.MEDIA,
+        areaActualId: 'area-legales',
+        usuarioAsignadoId: 'op-1',
+        creadoPorTipo: TipoUsuario.EXTERNO,
+        creadoPorId: 'ext-1',
+      });
+      tramiteRepoMock.findById.mockResolvedValue(tramite);
+
+      const useCase = new CerrarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      const result = await useCase.execute({
+        tramiteId: 'tramite-cerr-1',
+        motivo: 'Trámite finalizado y archivado',
+        contexto: {
+          usuarioTipo: TipoUsuario.INTERNO,
+          usuarioId: 'op-1',
+          rolInterno: RolInterno.OPERADOR,
+          areaUsuarioId: 'area-legales',
+        },
+      });
+
+      expect(result.estado).toBe(EstadoTramite.CERRADO);
+      expect(tramiteRepoMock.update).toHaveBeenCalled();
+      expect(movimientoRepoMock.save).toHaveBeenCalled();
+    });
+
+    it('no debe permitir cerrar si el usuario es externo', async () => {
+      const useCase = new CerrarTramiteUseCase(tramiteRepoMock, movimientoRepoMock);
+
+      await expect(
+        useCase.execute({
+          tramiteId: 'tramite-cerr-1',
+          contexto: {
+            usuarioTipo: TipoUsuario.EXTERNO,
+            usuarioId: 'ext-1',
           },
         }),
       ).rejects.toThrow(UnauthorizedActionException);
