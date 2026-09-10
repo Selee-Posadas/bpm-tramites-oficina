@@ -33,6 +33,7 @@ import { ModificarBorradorUseCase } from './application/use-cases/modificar-borr
 import { EliminarTramiteBorradorUseCase } from './application/use-cases/eliminar-tramite-borrador.use-case';
 import { AdjuntarDocumentoUseCase } from './application/use-cases/adjuntar-documento.use-case';
 import { ListarDocumentosUseCase } from './application/use-cases/listar-documentos.use-case';
+import { ObtenerDocumentoUseCase } from './application/use-cases/obtener-documento.use-case';
 import { EliminarDocumentoUseCase } from './application/use-cases/eliminar-documento.use-case';
 import { AgregarComentarioUseCase } from './application/use-cases/agregar-comentario.use-case';
 import { ListarComentariosUseCase } from './application/use-cases/listar-comentarios.use-case';
@@ -95,6 +96,7 @@ import { DashboardController } from './infrastructure/controllers/dashboard.cont
     EliminarTramiteBorradorUseCase,
     AdjuntarDocumentoUseCase,
     ListarDocumentosUseCase,
+    ObtenerDocumentoUseCase,
     EliminarDocumentoUseCase,
     AgregarComentarioUseCase,
     ListarComentariosUseCase,

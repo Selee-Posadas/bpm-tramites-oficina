@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthExternalService, AuthTokenResponse } from '../../application/auth-external.service';
 import { AuthInternalService } from '../../application/auth-internal.service';
 import { RegisterExternalDto } from '../../dto/register-external.dto';
@@ -14,8 +6,10 @@ import { LoginExternalDto } from '../../dto/login-external.dto';
 import { LoginInternalMockDto } from '../../dto/login-internal-mock.dto';
 import { ExternalAuthGuard } from '../guards/external-auth.guard';
 import { InternalAuthGuard } from '../guards/internal-auth.guard';
+import { AnyAuthGuard } from '../guards/any-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../domain/auth-user.interface';
+import { TipoUsuario } from '../../../tramites/domain/enums/tipo-usuario.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -26,43 +20,49 @@ export class AuthController {
 
   @Post('external/register')
   @HttpCode(HttpStatus.CREATED)
-  async registerExternal(
-    @Body() dto: RegisterExternalDto,
-  ): Promise<AuthTokenResponse> {
+  async registerExternal(@Body() dto: RegisterExternalDto): Promise<AuthTokenResponse> {
     return await this.authExternalService.register(dto);
   }
 
   @Post('external/login')
   @HttpCode(HttpStatus.OK)
-  async loginExternal(
-    @Body() dto: LoginExternalDto,
-  ): Promise<AuthTokenResponse> {
+  async loginExternal(@Body() dto: LoginExternalDto): Promise<AuthTokenResponse> {
     return await this.authExternalService.login(dto);
+  }
+
+  @Post('external/logout')
+  @HttpCode(HttpStatus.OK)
+  async logoutExternal(): Promise<{ message: string }> {
+    return { message: 'Sesión cerrada exitosamente' };
+  }
+
+  @Get('me')
+  @UseGuards(AnyAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async getMe(@CurrentUser() user: AuthenticatedUser): Promise<AuthenticatedUser> {
+    if (user.tipo === TipoUsuario.EXTERNO) {
+      return await this.authExternalService.getMe(user.id);
+    }
+    return await this.authInternalService.getInternalMe(user.id);
   }
 
   @Get('external/me')
   @UseGuards(ExternalAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getExternalMe(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<AuthenticatedUser> {
+  async getExternalMe(@CurrentUser() user: AuthenticatedUser): Promise<AuthenticatedUser> {
     return await this.authExternalService.getMe(user.id);
   }
 
   @Post('internal/login')
   @HttpCode(HttpStatus.OK)
-  async loginInternalMock(
-    @Body() dto: LoginInternalMockDto,
-  ): Promise<AuthTokenResponse> {
+  async loginInternalMock(@Body() dto: LoginInternalMockDto): Promise<AuthTokenResponse> {
     return await this.authInternalService.loginMock(dto);
   }
 
   @Get('internal/me')
   @UseGuards(InternalAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getInternalMe(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<AuthenticatedUser> {
+  async getInternalMe(@CurrentUser() user: AuthenticatedUser): Promise<AuthenticatedUser> {
     return await this.authInternalService.getInternalMe(user.id);
   }
 }

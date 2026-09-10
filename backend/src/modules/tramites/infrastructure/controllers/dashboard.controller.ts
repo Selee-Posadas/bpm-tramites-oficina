@@ -9,6 +9,11 @@ export class DashboardController {
     private readonly obtenerEstadisticasDashboardUseCase: ObtenerEstadisticasDashboardUseCase,
   ) {}
 
+  @Get()
+  async getDashboard() {
+    return await this.obtenerEstadisticasDashboardUseCase.execute();
+  }
+
   @Get('stats')
   async getStats() {
     return await this.obtenerEstadisticasDashboardUseCase.execute();
