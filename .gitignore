@@ -59,4 +59,5 @@ scratch/
 !jest*.json
 !**/jest*.json
 
-
+# Internal workspace configs
+AGENTS.md
